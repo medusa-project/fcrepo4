@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.utils.iterators;
 
-import static com.google.common.base.Objects.equal;
-import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Iterators.singletonIterator;
+import static com.google.common.collect.Sets.newHashSet;
+import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Objects.hash;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Spliterator;
+import java.util.stream.Stream;
 
 import javax.jcr.Session;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * A stream of RDF triples along with some useful context.
@@ -43,65 +42,80 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * @author ajs6f
  * @since Oct 9, 2013
  */
-public class RdfStream extends ForwardingIterator<Triple> {
+public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
 
     private final Map<String, String> namespaces = new HashMap<>();
+<<<<<<< HEAD
 
     protected Iterator<Triple> triples;
+=======
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
 
     protected Session context;
 
     protected Node topic;
 
-    private static final Triple[] NONE = new Triple[] {};
-
     /**
      * Constructor that begins the stream with proffered triples.
      *
+<<<<<<< HEAD
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterable}
+=======
+     * @param triples
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
      */
-    public <Tr extends Triple, T extends Iterator<Tr>> RdfStream(final T triples) {
-        super();
-        this.triples = Iterators.transform(triples, cast());
+    public <Tr extends Triple, T extends Stream<Tr>> RdfStream(final T triples) {
+        super(triples);
     }
 
     /**
      * Constructor that begins the stream with proffered triples.
      *
+<<<<<<< HEAD
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterable}
+=======
+     * @param triples
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
+     */
+    public RdfStream(final Iterator<? extends Triple> triples) {
+        super(triples);
+    }
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+<<<<<<< HEAD
+     * @param triples the triples
+     * @param <Tr> extends {@link Triple}
+     * @param <T> extends {@link Collection}
+=======
+     * @param triples
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
+     */
+    public RdfStream(final Spliterator<? extends Triple> triples) {
+        super(triples);
+    }
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+<<<<<<< HEAD
+     * @param triples the triples
+     * @param <T> extends {@link Triple}
+=======
+     * @param triples
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream(final T triples) {
         this(triples.iterator());
     }
 
     /**
-     * Constructor that begins the stream with proffered triples.
-     *
-     * @param triples the triples
-     * @param <Tr> extends {@link Triple}
-     * @param <T> extends {@link Collection}
-     */
-    public <Tr extends Triple, T extends Collection<Tr>> RdfStream(
-            final T triples) {
-        this(triples.iterator());
-    }
-
-    /**
-     * Constructor that begins the stream with proffered triples.
-     *
-     * @param triples the triples
-     * @param <T> extends {@link Triple}
-     */
-    @SafeVarargs
-    public <T extends Triple> RdfStream(final T... triples) {
-        this(Iterators.forArray(triples));
-    }
-
-    /**
+<<<<<<< HEAD
      * Constructor that begins the stream with proffered statements.
      *
      * @param statements the statements
@@ -140,11 +154,21 @@ public class RdfStream extends ForwardingIterator<Triple> {
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
         return new RdfStream(stream).namespaces(namespaces()).topic(topic()).session(session());
+=======
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
+    @SafeVarargs
+    public <T extends Triple> RdfStream(final T... triples) {
+        this(Iterators.forArray(triples));
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
     }
 
     /**
      * Returns the proffered {@link Triple}s with the context of this RdfStream.
      *
+<<<<<<< HEAD
      * @param stream the stream
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterator}
@@ -181,12 +205,21 @@ public class RdfStream extends ForwardingIterator<Triple> {
     public <T extends Triple> RdfStream concat(@SuppressWarnings("unchecked") final T... newTriples) {
         triples = Iterators.concat(triples, Iterators.forArray(newTriples));
         return this;
+=======
+     * @param stream
+     * @return proffered Triples with the context of this RDFStream
+     */
+    @Override
+    public RdfStream withThisContext(final Spliterator<? extends Triple> stream) {
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic()).session(session());
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
     }
 
     /**
-     * @param newTriples Triples to add.
+     * @param other stream to add.
      * @return This object for continued use.
      */
+<<<<<<< HEAD
     public RdfStream concat(final Collection<? extends Triple> newTriples) {
         triples = Iterators.concat(triples, newTriples.iterator());
         return this;
@@ -232,6 +265,11 @@ public class RdfStream extends ForwardingIterator<Triple> {
      */
     public <ToType> Iterator<ToType> transform(final Function<? super Triple, ToType> f) {
         return Iterators.transform(this, f);
+=======
+    public RdfStream concat(final RdfStream other) {
+        namespaces(other.namespaces());
+        return concat(other.spliterator());
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
     }
 
     /**
@@ -248,8 +286,13 @@ public class RdfStream extends ForwardingIterator<Triple> {
     /**
      * RdfStream
      *
+<<<<<<< HEAD
      * @param prefix the prefix
      * @param uri the uri
+=======
+     * @param prefix
+     * @param uri
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
      * @return This object for continued use.
      */
     public RdfStream namespace(final String prefix, final String uri) {
@@ -258,7 +301,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
     }
 
     /**
-     * @param nses the property of nses
+     * @param nses
      * @return This object for continued use.
      */
     public RdfStream namespaces(final Map<String, String> nses) {
@@ -277,7 +320,6 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * Sets the JCR context of this stream
      *
      * @param session The {@link Session} in context
-     * @return the JCR context of this stream
      */
     public RdfStream session(final Session session) {
         this.context = session;
@@ -295,7 +337,6 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * Sets the topic of this stream
      *
      * @param topic The {@link Node} topic in context
-     * @return the stream
      */
     public RdfStream topic(final Node topic) {
         this.topic = topic;
@@ -304,15 +345,18 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * WARNING! This method exhausts the RdfStream on which it is called!
+<<<<<<< HEAD
+=======
+     * <p>
+     * This is a <a href="java.util.stream.Stream">terminal operation</a>.
+>>>>>>> First tentative examples, tests pass but Checkstyle freaks
      *
      * @return A {@link Model} containing the prefix mappings and triples in this stream of RDF
      */
     public Model asModel() {
         final Model model = createDefaultModel();
         model.setNsPrefixes(namespaces());
-        for (final Triple t : this.iterable()) {
-            model.add(model.asStatement(t));
-        }
+        forEachOrdered(t -> model.add(model.asStatement(t)));
         return model;
     }
 
@@ -321,35 +365,8 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @return RDFStream
      */
     public static RdfStream fromModel(final Model model) {
-        final Iterator<Triple> triples = Iterators.transform(model.listStatements(), statement2triple);
-        return new RdfStream(triples).namespaces(model.getNsPrefixMap());
-    }
-
-    private static Function<Statement, Triple> statement2triple = new Function<Statement, Triple>() {
-
-        @Override
-        public Triple apply(final Statement s) {
-            return s.asTriple();
-        }
-
-    };
-
-    @Override
-    protected Iterator<Triple> delegate() {
-        return triples;
-    }
-
-    /**
-     * @return an anonymous {@literal Iterable<Triple>} for use with for-each etc.
-     */
-    public Iterable<Triple> iterable() {
-        return new Iterable<Triple>() {
-
-            @Override
-            public Iterator<Triple> iterator() {
-                return triples;
-            }
-        };
+        final Iterator<Triple> modelTriples = model.getGraph().find(ANY, ANY, ANY);
+        return new RdfStream(modelTriples).namespaces(model.getNsPrefixMap());
     }
 
     /**
@@ -359,21 +376,6 @@ public class RdfStream extends ForwardingIterator<Triple> {
         return namespaces;
     }
 
-    private static <T extends Triple> Function<T, Triple> cast() {
-        return new Function<T, Triple>() {
-
-            @Override
-            public Triple apply(final T prototriple) {
-                return prototriple;
-            }
-
-        };
-    }
-
-    /*
-     * We ignore duplicated triples for equality. (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(final Object o) {
         if (o == null) {
@@ -386,23 +388,26 @@ public class RdfStream extends ForwardingIterator<Triple> {
             return false;
         }
         final RdfStream rdfo = (RdfStream) o;
-
-        final boolean triplesEqual =
-                equal(copyOf(rdfo.triples), copyOf(this.triples));
-
-        final boolean namespaceMappingsEqual =
-                equal(rdfo.namespaces(), this.namespaces());
-
-        final boolean topicEqual =
-                equal(rdfo.topic(), this.topic());
-
-        return triplesEqual && namespaceMappingsEqual && topicEqual;
-
+        if (!Objects.equals(rdfo.topic(), topic())) {
+            return false;
+        }
+        if (!Objects.equals(rdfo.namespaces(), namespaces())) {
+            return false;
+        }
+        if (!Objects.equals(rdfo.session(), session())) {
+            return false;
+        }
+        final HashSet<? extends Triple> myTriples = newHashSet(iterator());
+        final HashSet<? extends Triple> theirTriples = newHashSet(rdfo.iterator());
+        if (!myTriples.equals(theirTriples)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return hash(namespaces(), triples, topic());
+        return hash(namespaces(), iterator(), topic(), session());
     }
 
 }
