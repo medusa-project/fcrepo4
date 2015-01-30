@@ -1,18 +1,18 @@
 /**
-*  Copyright 2015 DuraSpace, Inc.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package org.fcrepo.kernel.utils.iterators;
 
@@ -37,13 +37,14 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
-* A stream of RDF triples along with some useful context.
-*
-* @author ajs6f
-* @since Oct 9, 2013
-*/
+ * A stream of RDF triples along with some useful context.
+ *
+ * @author ajs6f
+ * @since Oct 9, 2013
+ */
 public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     private final Map<String, String> namespaces = new HashMap<>();
 <<<<<<< HEAD
@@ -51,6 +52,9 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     protected Iterator<Triple> triples;
 =======
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+    private final Map<String, String> namespaces = new HashMap<>();
+>>>>>>> Adding sessioning into RdfStream context
 
     protected Session context;
 
@@ -60,12 +64,16 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
      * Constructor that begins the stream with proffered triples.
      *
 <<<<<<< HEAD
+<<<<<<< HEAD
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterable}
 =======
      * @param triples
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+     * @param triples
+>>>>>>> Adding sessioning into RdfStream context
      */
     public <Tr extends Triple, T extends Stream<Tr>> RdfStream(final T triples) {
         super(triples);
@@ -75,12 +83,16 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
      * Constructor that begins the stream with proffered triples.
      *
 <<<<<<< HEAD
+<<<<<<< HEAD
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterable}
 =======
      * @param triples
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+     * @param triples
+>>>>>>> Adding sessioning into RdfStream context
      */
     public RdfStream(final Iterator<? extends Triple> triples) {
         super(triples);
@@ -90,12 +102,16 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
      * Constructor that begins the stream with proffered triples.
      *
 <<<<<<< HEAD
+<<<<<<< HEAD
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Collection}
 =======
      * @param triples
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+     * @param triples
+>>>>>>> Adding sessioning into RdfStream context
      */
     public RdfStream(final Spliterator<? extends Triple> triples) {
         super(triples);
@@ -105,17 +121,22 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
      * Constructor that begins the stream with proffered triples.
      *
 <<<<<<< HEAD
+<<<<<<< HEAD
      * @param triples the triples
      * @param <T> extends {@link Triple}
 =======
      * @param triples
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+     * @param triples
+>>>>>>> Adding sessioning into RdfStream context
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream(final T triples) {
         this(triples.iterator());
     }
 
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
      * Constructor that begins the stream with proffered statements.
      *
@@ -156,6 +177,8 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
         return new RdfStream(stream).namespaces(namespaces()).topic(topic()).session(session());
 =======
+=======
+>>>>>>> Adding sessioning into RdfStream context
      * Constructor that begins the stream with proffered triples.
      *
      * @param triples
@@ -163,12 +186,16 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     @SafeVarargs
     public <T extends Triple> RdfStream(final T... triples) {
         this(Iterators.forArray(triples));
+<<<<<<< HEAD
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+>>>>>>> Adding sessioning into RdfStream context
     }
 
     /**
      * Returns the proffered {@link Triple}s with the context of this RdfStream.
      *
+<<<<<<< HEAD
 <<<<<<< HEAD
      * @param stream the stream
      * @param <Tr> extends {@link Triple}
@@ -207,19 +234,25 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
         triples = Iterators.concat(triples, Iterators.forArray(newTriples));
         return this;
 =======
+=======
+>>>>>>> Adding sessioning into RdfStream context
      * @param stream
      * @return proffered Triples with the context of this RDFStream
      */
     @Override
     public RdfStream withThisContext(final Spliterator<? extends Triple> stream) {
         return new RdfStream(stream).namespaces(namespaces()).topic(topic()).session(session());
+<<<<<<< HEAD
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+>>>>>>> Adding sessioning into RdfStream context
     }
 
     /**
      * @param other stream to add.
      * @return This object for continued use.
      */
+<<<<<<< HEAD
 <<<<<<< HEAD
     public RdfStream concat(final Collection<? extends Triple> newTriples) {
         triples = Iterators.concat(triples, newTriples.iterator());
@@ -294,6 +327,18 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
      * @param prefix
      * @param uri
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+    public RdfStream concat(final RdfStream other) {
+        namespaces(other.namespaces());
+        return concat(other.spliterator());
+    }
+
+    /**
+     * RdfStream
+     *
+     * @param prefix
+     * @param uri
+>>>>>>> Adding sessioning into RdfStream context
      * @return This object for continued use.
      */
     public RdfStream namespace(final String prefix, final String uri) {
@@ -347,10 +392,15 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     /**
      * WARNING! This method exhausts the RdfStream on which it is called!
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
      * <p>
      * This is a <a href="java.util.stream.Stream">terminal operation</a>.
 >>>>>>> First tentative examples, tests pass but Checkstyle freaks
+=======
+     * <p>
+     * This is a <a href="java.util.stream.Stream">terminal operation</a>.
+>>>>>>> Adding sessioning into RdfStream context
      *
      * @return A {@link Model} containing the prefix mappings and triples in this stream of RDF
      */
@@ -410,6 +460,7 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     public int hashCode() {
         return hash(namespaces(), iterator(), topic(), session());
     }
+<<<<<<< HEAD
 =======
    private final Map<String, String> namespaces = new HashMap<>();
 
@@ -602,5 +653,7 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
        return hash(namespaces(), iterator(), topic(), session());
    }
 >>>>>>> A few more examples, RdfStream now impls the new Java 8 type Stream, Checkstyles has been temporarily turned off
+=======
+>>>>>>> Adding sessioning into RdfStream context
 
 }
