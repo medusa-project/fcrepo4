@@ -18,6 +18,7 @@ package org.fcrepo.kernel.utils.iterators;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
@@ -163,7 +164,7 @@ public class RdfStreamTest {
     public void testWithThisContextIterable() {
         testStream.namespace(prefix1, uri1);
         testStream.topic(createAnon());
-        final RdfStream testStream2 = testStream.withThisContext(new RdfStream().iterable());
+        final RdfStream testStream2 = testStream.withThisContext(emptyList());
         assertEquals(testStream.namespaces(), testStream2.namespaces());
         assertEquals(testStream.topic(), testStream2.topic());
     }
