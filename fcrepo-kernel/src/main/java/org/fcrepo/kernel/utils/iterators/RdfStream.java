@@ -44,17 +44,7 @@ import com.hp.hpl.jena.rdf.model.Model;
  */
 public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     private final Map<String, String> namespaces = new HashMap<>();
-<<<<<<< HEAD
-
-    protected Iterator<Triple> triples;
-=======
->>>>>>> First tentative examples, tests pass but Checkstyle freaks
-=======
-    private final Map<String, String> namespaces = new HashMap<>();
->>>>>>> Adding sessioning into RdfStream context
 
     protected Session context;
 
@@ -63,17 +53,9 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     /**
      * Constructor that begins the stream with proffered triples.
      *
-<<<<<<< HEAD
-<<<<<<< HEAD
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
-     * @param <T> extends {@link Iterable}
-=======
-     * @param triples
->>>>>>> First tentative examples, tests pass but Checkstyle freaks
-=======
-     * @param triples
->>>>>>> Adding sessioning into RdfStream context
+     * @param <T> extends {@link Stream}
      */
     public <Tr extends Triple, T extends Stream<Tr>> RdfStream(final T triples) {
         super(triples);
@@ -303,7 +285,7 @@ public class RdfStream extends SpliteratorStream<Triple, RdfStream> {
     public RdfStream concat(final RdfStream other) {
         namespaces(other.namespaces());
         return concat(other.spliterator());
->>>>>>> First tentative examples, tests pass but Checkstyle freaks
+>>>>>>> First final tentative examples, tests pass final but Checkstyle freaks
     }
 
     /**

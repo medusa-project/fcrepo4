@@ -15,7 +15,11 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
+<<<<<<< HEAD
 import com.google.common.base.Predicate;
+=======
+import java.util.function.Predicate;
+>>>>>>> Propagating new Stream type out from RdfStream
 
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -78,7 +82,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             new Predicate<FedoraResource>() {
 
                 @Override
-                public boolean apply(final FedoraResource f) {
+                public boolean test(final FedoraResource f) {
                     return f.hasType(FROZEN_NODE) || f.getPath().contains(JCR_FROZEN_NODE);
                 }
      };
@@ -87,8 +91,13 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Predicate for determining whether this {@link Node} is a Fedora
      * binary.
      */
+<<<<<<< HEAD
     public static Predicate<Node> isSkolemNode =
             new AnyTypesPredicate(FEDORA_SKOLEMNODE);
+=======
+    public static java.util.function.Predicate<? super Node> isBlankNode =
+            new AnyTypesPredicate(FEDORA_BLANKNODE);
+>>>>>>> Propagating new Stream type out from RdfStream
 
     /**
      * Check if a property is a reference property.
@@ -97,7 +106,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         new Predicate<Property>() {
 
             @Override
-            public boolean apply(final Property p) {
+            public boolean test(final Property p) {
                 try {
                     return (p.getType() == REFERENCE || p.getType() == WEAKREFERENCE)
                         && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
@@ -115,22 +124,20 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         new Predicate<Property>() {
 
             @Override
-            public boolean apply(final Property p) {
+            public boolean test(final Property p) {
                 return JcrPropertyFunctions.isBinaryContentProperty.apply(p)
-                        || isProtectedAndShouldBeHidden.apply(p);
+                        || isProtectedAndShouldBeHidden.test(p);
             }
         };
 
     /**
-     * Check whether a property is protected (ie, cannot be modified directly) but
-     * is not one we've explicitly chosen to include.
+     * Check whether a property is protected (ie, cannot be modified directly) but is not one we've explicitly chosen
+     * to include.
      */
-    public static Predicate<Property> isProtectedAndShouldBeHidden = new ProtectedAndHiddenCheck();
-
-    private static class ProtectedAndHiddenCheck implements  Predicate<Property> {
+    public static Predicate<Property> isProtectedAndShouldBeHidden = new Predicate<Property>() {
 
         @Override
-        public boolean apply(final Property p) {
+        public boolean test(final Property p) {
             try {
                 if (!p.getDefinition().isProtected()) {
                     return false;
@@ -147,13 +154,13 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                             return false;
                         }
                     }
-                    return true;
                 }
+                return true;
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
         }
-    }
+    };
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST
@@ -162,7 +169,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static Predicate<Node> isInternalNode = new Predicate<Node>() {
 
         @Override
-        public boolean apply(final Node n) {
+        public boolean test(final Node n) {
             checkNotNull(n, "null is neither internal nor not internal!");
             try {
                 return n.isNodeType("mode:system");

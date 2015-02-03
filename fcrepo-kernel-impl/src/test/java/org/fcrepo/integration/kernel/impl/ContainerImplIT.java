@@ -66,6 +66,10 @@ public class ContainerImplIT extends AbstractIT {
 
     private DefaultIdentifierTranslator subjects;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> Propagating new Stream type out from RdfStream
     private static final Logger log = getLogger(ContainerImplIT.class);
 
     @Before
@@ -232,9 +236,12 @@ public class ContainerImplIT extends AbstractIT {
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
-
         assertNotNull("Expected an exception to get thrown", e);
+<<<<<<< HEAD
         log.debug("Got exception with message: {}", e.getMessage());
+=======
+        log.info("Received exception: {}", e.getMessage());
+>>>>>>> Propagating new Stream type out from RdfStream
         assertEquals("Expected two nested exceptions", 2, e.getMessage().split("\n").length);
         assertTrue(e.getMessage().contains("/relative-url"));
         assertTrue(e.getMessage().contains("/another-relative-url"));

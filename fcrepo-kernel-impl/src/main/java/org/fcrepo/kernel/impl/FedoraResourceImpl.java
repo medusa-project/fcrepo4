@@ -176,7 +176,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 public boolean apply(final Node n) {
                     LOGGER.trace("Testing child node {}", n);
                     try {
-                        return isInternalNode.apply(n)
+                        return isInternalNode.test(n)
                                 || n.getName().equals(JCR_CONTENT)
                                 || TombstoneImpl.hasMixin(n)
                                 || n.getName().equals("#");
@@ -417,16 +417,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             try {
                 final Constructor<? extends RdfStream> declaredConstructor
                         = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
-
                 final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
                 rdfStream.session(getSession());
-
                 stream.concat(rdfStream);
             } catch (final NoSuchMethodException |
                     InstantiationException |
                     IllegalAccessException e) {
                 // Shouldn't happen.
-                throw propagate(e);
+                throw new AssertionError(e);
             } catch (final InvocationTargetException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof RepositoryException) {
@@ -435,7 +433,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 throw propagate(cause);
             }
         }
-
         return stream;
     }
 
@@ -528,8 +525,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             new RdfRemover(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer)).consume();
         } catch (final MalformedRdfException e) {
-            exceptions.append(e.getMessage());
-            exceptions.append("\n");
+            exceptions.append(e.getMessage()+"\n");
         }
 
         try {
@@ -587,7 +583,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     @Override
     public boolean isFrozenResource() {
-        return isFrozenNode.apply(this);
+        return isFrozenNode.test(this);
     }
 
     @Override
