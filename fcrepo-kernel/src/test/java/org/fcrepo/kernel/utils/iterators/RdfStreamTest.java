@@ -23,8 +23,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 <<<<<<< HEAD
 import static org.mockito.Mockito.verify;
@@ -32,10 +32,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
 >>>>>>> Propagating new Stream type out from RdfStream
 import static org.mockito.Mockito.when;
+
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import javax.jcr.Session;
 
@@ -203,6 +202,7 @@ public class RdfStreamTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void testLimit() {
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         when(mockIterator.next()).thenReturn(triple);
@@ -290,6 +290,8 @@ public class RdfStreamTest {
     }
 
     @Test
+=======
+>>>>>>> Factoring delegation out of RDF generation, minor refactoring to use Java 8 lambda-idioms
     public void testEquals() {
         assertNotEquals(testStream, new Object());
         RdfStream testStreamToCompare = new RdfStream(triple);
