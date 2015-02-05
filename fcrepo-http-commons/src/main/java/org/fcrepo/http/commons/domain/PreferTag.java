@@ -146,9 +146,8 @@ public class PreferTag implements Comparable<PreferTag> {
     public boolean equals(final Object obj) {
         if ((obj != null) && (obj instanceof PreferTag)) {
             return getTag().equals(((PreferTag) obj).getTag());
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override
