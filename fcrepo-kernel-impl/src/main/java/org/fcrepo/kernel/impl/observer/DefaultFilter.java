@@ -15,20 +15,21 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-
-import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.disjoint;
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.function.Predicate;
 
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -37,18 +38,9 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.utils.Streams;
 import org.fcrepo.kernel.observer.EventFilter;
 
 import org.slf4j.Logger;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -66,10 +58,13 @@ import java.util.stream.Collectors;
  */
 public class DefaultFilter implements EventFilter {
 
-    private static final Logger LOGGER = getLogger(DefaultFilter.class);
+    private static final List<String> TYPES = asList(FEDORA_RESOURCE, FEDORA_BINARY,
+            FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_CONTAINER);
 
     private static final HashSet<String> fedoraMixins =
             newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE);
+
+    private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     @Override
     public Predicate<Event> getFilter(final Session session) {

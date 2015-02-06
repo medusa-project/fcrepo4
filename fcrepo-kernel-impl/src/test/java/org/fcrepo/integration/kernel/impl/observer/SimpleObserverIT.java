@@ -16,7 +16,6 @@
 package org.fcrepo.integration.kernel.impl.observer;
 
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
@@ -27,6 +26,8 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import javax.inject.Inject;
@@ -40,12 +41,16 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.services.ContainerService;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.Binary;
+
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.ValueFactory;
+
+import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.google.common.eventbus.EventBus;
@@ -57,9 +62,13 @@ import java.util.Set;
  * <p>SimpleObserverIT class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 @ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
+
+    private static final Logger log = getLogger(SimpleObserverIT.class);
+
 
     private Integer eventBusMessageCount;
 
@@ -67,16 +76,22 @@ public class SimpleObserverIT extends AbstractIT {
     private Repository repository;
 
     @Inject
+    private ContainerService containerService;
+
+    @Inject
     private EventBus eventBus;
 
     @Test
     public void TestEventBusPublishing() throws RepositoryException {
-
         final Session se = repository.login();
-        se.getRootNode().addNode("/object1").addMixin(FEDORA_CONTAINER);
-        se.getRootNode().addNode("/object2").addMixin(FEDORA_CONTAINER);
-        se.save();
-        se.logout();
+        try {
+            containerService.findOrCreate(se, "/object1");
+            se.save();
+            containerService.findOrCreate(se, "/object2");
+            se.save();
+        } finally {
+            se.logout();
+        }
 
         try {
             Thread.sleep(500);
@@ -103,8 +118,7 @@ public class SimpleObserverIT extends AbstractIT {
 
         final String content = "test content";
         final String checksum = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
-        final Binary bin = ((ValueFactory)se.getValueFactory()).createBinary(
-                new ByteArrayInputStream(content.getBytes()), null );
+        ((ValueFactory)se.getValueFactory()).createBinary(new ByteArrayInputStream(content.getBytes()), null);
 
         final Node contentNode = jcrTools.findOrCreateChild(n, JCR_CONTENT, NT_RESOURCE);
         contentNode.addMixin(FEDORA_BINARY);
@@ -126,14 +140,15 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Subscribe
-    public void countMessages(final FedoraEvent e) {
+    public void countMessages(final FedoraEvent e) throws RepositoryException {
         eventBusMessageCount++;
-
+        log.info("Received event from path: {}", e.getPath());
         final Set<String> properties = e.getProperties();
         assertNotNull(properties);
+        log.info("Discovered properties: {}", properties);
 
         final String expected = REPOSITORY_NAMESPACE + "mixinTypes";
-        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
+        assertTrue("Should contain: " + expected + " in " + properties, properties.contains(expected));
     }
 
     @Before

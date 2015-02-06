@@ -17,9 +17,12 @@ package org.fcrepo.kernel.impl.observer;
 
 import java.util.function.Function;
 
+
 import org.fcrepo.kernel.observer.FedoraEvent;
 
+
 import org.slf4j.Logger;
+
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
@@ -56,11 +59,12 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
 
         final FedoraEvent event = new FedoraEvent(evt);
-        evt.getProperties().stream().forEach(
+        evt.getProperties().forEach(
                 property -> {
                     final String[] parts = property.split(":", 2);
                     if (parts.length == 2) {
                         final String prefix = parts[0];
+
                         if ("jcr".equals(prefix)) {
                             if (jcrProperties.contains(createProperty(REPOSITORY_NAMESPACE + parts[1]))) {
                                 event.addProperty(REPOSITORY_NAMESPACE + parts[1]);
@@ -76,10 +80,11 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
                             }
                         }
                     } else {
+                        LOGGER.trace("Adding property: {}", property);
                         event.addProperty(property);
                     }
                 });
-        evt.getTypes().stream().forEach(t -> event.addType(t));
+        evt.getTypes().forEach(event::addType);
         return event;
     }
 
