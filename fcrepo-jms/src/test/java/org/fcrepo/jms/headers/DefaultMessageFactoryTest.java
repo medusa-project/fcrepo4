@@ -15,6 +15,7 @@
  */
 package org.fcrepo.jms.headers;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
@@ -40,8 +41,10 @@ import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
 import org.apache.commons.lang.StringUtils;
+
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -102,7 +105,7 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getDate()).thenReturn(testDate);
 
         String url = null;
-        if (!StringUtils.isBlank(baseUrl) || !StringUtils.isBlank(userAgent)) {
+        if (!isNullOrEmpty(baseUrl) || !isNullOrEmpty(userAgent)) {
             url = "{\"baseURL\":\"" + baseUrl + "\",\"userAgent\":\"" + userAgent + "\"}";
         }
         when(mockEvent.getUserData()).thenReturn(url);
