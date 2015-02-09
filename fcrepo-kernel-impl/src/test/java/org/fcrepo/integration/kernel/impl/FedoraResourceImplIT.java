@@ -32,7 +32,6 @@ import static org.fcrepo.kernel.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -620,7 +619,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container container = containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a");
 
-        assertEquals(resource, container.getChildren().next());
+        assertEquals(resource, container.getChildren().findFirst().get());
     }
 
     @Test
@@ -629,7 +628,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container container = containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid + "/a");
 
-        assertEquals(resource, container.getChildren().next());
+        assertEquals(resource, container.getChildren().findFirst().get());
     }
 
     @Test
@@ -655,7 +654,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a/b/c/d");
-        assertTrue(fromIterator(container.getChildren()).anyMatch(resource::equals));
+        assertTrue(container.getChildren().anyMatch(resource::equals));
     }
 
     @Test
@@ -665,7 +664,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a");
 
         resource.delete();
-        assertFalse(container.getChildren().hasNext());
+        assertFalse(container.getChildren().count() > 0);
     }
 
     @Test
@@ -674,7 +673,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container container = containerService.findOrCreate(session, "/" + pid);
         containerService.findOrCreate(session, "/" + pid + "/#/a");
 
-        assertFalse(container.getChildren().hasNext());
+        assertFalse(container.getChildren().count() > 0);
     }
 
     @Test
