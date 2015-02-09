@@ -21,7 +21,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.UncheckedPredicate;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueStream;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -102,8 +102,12 @@ public class BlankNodeRdfContext extends NodeRdfContext {
     private Stream<Node> getBlankNodesIterator() throws RepositoryException {
         final Iterator<Property> propertiesIterator = resource().getNode().getProperties();
         final Stream<Property> references = fromIterator(propertiesIterator).filter(filterReferenceProperties);
+<<<<<<< HEAD
         return fromIterator(new PropertyValueIterator(references)).map(getNodesForValue).filter(isBlankNode);
 >>>>>>> Propagating new Stream type out from RdfStream
+=======
+        return new PropertyValueStream(references).map(getNodesForValue).filter(isBlankNode);
+>>>>>>> Stream-ifying Property-Value conversion
     }
 
     private static final Predicate<Property> filterReferenceProperties = UncheckedPredicate
