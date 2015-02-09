@@ -18,15 +18,16 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.JsonObject;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.Tombstone;
 import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.slf4j.Logger;
 
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
 import javax.ws.rs.core.HttpHeaders;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -76,7 +78,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     /**
      * Set the baseURL for JMS events.
      * @param uriInfo the uri info
-     * @param headers HTTP headers
+     * TODO remove this misplaced concern from HTTP layer
      **/
     protected void setUpJMSInfo(final UriInfo uriInfo, final HttpHeaders headers) {
         try {
@@ -85,11 +87,15 @@ abstract public class FedoraBaseResource extends AbstractResource {
             final ObservationManager obs = session().getWorkspace().getObservationManager();
             final JsonObject json = new JsonObject();
             json.addProperty("baseURL", baseURL.toString());
-            if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
+            if (!isNullOrEmpty(headers.getHeaderString("user-agent"))) {
                 json.addProperty("userAgent",headers.getHeaderString("user-agent"));
             }
             obs.setUserData(json.toString());
+<<<<<<< HEAD
         } catch ( final Exception ex ) {
+=======
+        } catch (final RepositoryException ex) {
+>>>>>>> Bringing Java8 idioms to other modules
             LOGGER.warn("Error setting baseURL", ex);
         }
     }
