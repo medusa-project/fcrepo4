@@ -60,13 +60,17 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetPath() {
+    public void testGetPath() throws RepositoryException {
         assertEquals("Path/Child", e.getPath());
-
     }
 
     @Test
-    public void testGetPathWithProperties() {
+    public void testGetOriginalPath() throws RepositoryException {
+        assertEquals("Path/Child", e.getOriginalPath());
+    }
+
+    @Test
+    public void testGetPathWithProperties() throws RepositoryException {
         final FedoraEvent e = new FedoraEvent(new TestEvent(PROPERTY_CHANGED,
                                                             "Path/Child",
                                                             "UserId",

@@ -105,11 +105,19 @@ public class FedoraEvent {
     }
 
     /**
-     * @return the path of the underlying JCR {@link Event}s
+     * @return the path of the node for the underlying JCR {@link Event}s
      * @throws RepositoryException if the repository exception occurred
      */
     public String getPath() throws RepositoryException {
-        return getPath(e);
+        return getNodePath(e);
+    }
+
+    /**
+     * @return the path for the underlying JCR {@link Event}s
+     * @throws RepositoryException if the repository exception occurred
+     */
+    public String getOriginalPath() throws RepositoryException {
+        return e.getPath();
     }
 
     /**
@@ -117,9 +125,9 @@ public class FedoraEvent {
      * from the end of property nodes).
      * @param e JCR Event
     **/
-    public static String getPath(final Event e) throws RepositoryException {
+    public static String getNodePath(final Event e) throws RepositoryException {
         return PROPERTY_EVENT_TYPES.contains(e.getType()) ? e.getPath().substring(0, e.getPath().lastIndexOf("/"))
-                : null;
+                : e.getPath();
     }
 
     /**

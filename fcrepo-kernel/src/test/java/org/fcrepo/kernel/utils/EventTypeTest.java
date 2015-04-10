@@ -18,6 +18,7 @@ package org.fcrepo.kernel.utils;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.kernel.utils.EventType.valueOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
@@ -33,9 +34,8 @@ public class EventTypeTest {
         assertEquals("node added", valueOf(NODE_ADDED).getName());
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void testBadEvent() {
-        valueOf(9999999);
+        assertNull(valueOf(9999999));
     }
 
     @Test()

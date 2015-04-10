@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.utils;
 
-import static com.google.common.base.Functions.forMap;
 import static com.google.common.collect.ImmutableMap.builder;
 import java.util.Map;
 
@@ -73,6 +72,6 @@ public enum EventType {
      * @return EventType
      */
     public static EventType valueOf(final Integer i) {
-        return forMap(translation).apply(i);
+        return translation.get(i);
     }
 }

@@ -167,7 +167,7 @@ public class HeadersJMSIT implements MessageListener {
     }
 
     @Test(timeout = TIMEOUT)
-    public void testMetadataEvents() throws RepositoryException {
+    public void testPropertyEvents() throws RepositoryException {
 
         final Session session = repository.login();
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
@@ -193,6 +193,8 @@ public class HeadersJMSIT implements MessageListener {
     }
 
     private void awaitMessageOrFail(final String id, final String eventType, final String property) {
+        LOGGER.debug("Awaiting message for resource with ID: {}, event type: {}, and property: {}", id, eventType,
+                property);
         await().pollInterval(ONE_SECOND).until(new Callable<Boolean>() {
 
             @Override
