@@ -26,11 +26,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-<<<<<<< HEAD
-import static org.mockito.Mockito.verify;
-=======
-import static org.mockito.Mockito.mock;
->>>>>>> Propagating new Stream type out from RdfStream
 import static org.mockito.Mockito.when;
 
 import java.util.Iterator;
@@ -144,28 +139,6 @@ public class RdfStreamTest {
     }
 
     @Test
-    public void testConcat() {
-        when(mockIterator.next()).thenReturn(triple1, triple2);
-        final RdfStream testStream2 = new RdfStream(triple3);
-        testStream.concat(testStream2);
-        assertEquals(triple3, testStream.findFirst().get());
-    }
-
-    @Test
-    public void testCollectionConcat() {
-        when(mockIterator.next()).thenReturn(triple1, triple2);
-        testStream.concat(ImmutableSet.of(triple3));
-        assertEquals(triple3, testStream.findFirst().get());
-    }
-
-    @Test
-    public void testVarargsConcat() {
-        when(mockIterator.next()).thenReturn(triple1, triple2);
-        testStream.concat(new Triple[] { triple3 });
-        assertEquals(triple3, testStream.findFirst().get());
-    }
-
-    @Test
     public void testAddNamespace() {
         testStream.namespace(prefix1, uri1);
         assertTrue(testStream.namespaces().containsKey(prefix1));
@@ -202,82 +175,6 @@ public class RdfStreamTest {
     }
 
     @Test
-<<<<<<< HEAD
-    public void testLimit() {
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple);
-        final Iterator<Triple> testIterator = testStream.limit(2).iterator();
-        testIterator.next();
-        testIterator.next();
-        assertFalse(testIterator.hasNext());
-    }
-
-    @Test
-    public void testSkip() {
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        testStream = testStream.skip(3);
-        assertFalse(testStream.findFirst().isPresent());
-    }
-
-    @Test
-    public void testFilter() {
-        final Predicate<Triple> predicate = new Predicate<Triple>() {
-
-            @Override
-            public boolean test(final Triple t) {
-                return t.equals(triple);
-            }
-
-        };
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple1, triple2, triple);
-        testStream = testStream.filter(predicate);
-        assertEquals(triple, testStream.findFirst().get());
-    }
-
-    @Test
-    public void testMap() {
-
-        final String oneResult = "One result";
-
-        final String otherResult = "The other result";
-
-        final Function<Triple, String> f = new Function<Triple, String>() {
-
-            @Override
-            public String apply(final Triple t) {
-                return t.equals(triple) ? oneResult : otherResult;
-            }
-
-        };
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple1, triple2, triple);
-        final Iterator<String> testIterator = testStream.map(f).iterator();
-        assertEquals(otherResult, testIterator.next());
-        assertEquals(otherResult, testIterator.next());
-        assertEquals(oneResult, testIterator.next());
-    }
-
-    @Test
-    public void testMap() {
-        final Function<Triple, Triple> f = new Function<Triple, Triple>() {
-
-            @Override
-            public Triple apply(final Triple t) {
-                return triple;
-            }
-
-        };
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple1, triple2, triple3);
-        testStream.session(mockSession).topic(mockTopic).namespaces(testNamespaces);
-        final RdfStream result = testStream.map(f);
-        assertEquals(mockSession, result.session());
-        assertEquals(testNamespaces, result.namespaces());
-        assertEquals(mockTopic, result.topic());
-    }
-
-    @Test
     public void testCanContinue() {
         when(mockIterator.hasNext()).thenReturn(true).thenThrow(
                 new RuntimeException("Expected.")).thenReturn(true);
@@ -290,8 +187,6 @@ public class RdfStreamTest {
     }
 
     @Test
-=======
->>>>>>> Factoring delegation out of RDF generation, minor refactoring to use Java 8 lambda-idioms
     public void testEquals() {
         assertNotEquals(testStream, new Object());
         RdfStream testStreamToCompare = new RdfStream(triple);

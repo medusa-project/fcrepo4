@@ -15,36 +15,19 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-import com.google.common.base.Predicate;
-=======
-=======
+
+import static java.util.Arrays.asList;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.UNDEFINED;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
->>>>>>> More functional idioms in kernel and kernel-impl
 import java.util.function.Predicate;
->>>>>>> Propagating new Stream type out from RdfStream
-
-
-
 import java.util.stream.Stream;
-
-import org.fcrepo.kernel.FedoraJcrTypes;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
-import org.fcrepo.kernel.utils.UncheckedPredicate;
-
-
-
-
-import org.slf4j.Logger;
-
-
-
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -53,15 +36,14 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import org.fcrepo.kernel.FedoraJcrTypes;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
 
+import org.slf4j.Logger;
 
-
-import static java.util.Arrays.asList;
-import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.UNDEFINED;
-import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the
@@ -109,13 +91,9 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Predicate for determining whether this {@link Node} is a Fedora
      * binary.
      */
-<<<<<<< HEAD
     public static Predicate<Node> isSkolemNode =
             new AnyTypesPredicate(FEDORA_SKOLEMNODE);
-=======
-    public static java.util.function.Predicate<? super Node> isBlankNode =
-            new AnyTypesPredicate(FEDORA_BLANKNODE);
->>>>>>> Propagating new Stream type out from RdfStream
+
 
     /**
      * Check if a property is a reference property.

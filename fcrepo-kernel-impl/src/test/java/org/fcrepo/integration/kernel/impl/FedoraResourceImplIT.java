@@ -441,11 +441,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             object.updateProperties(
                     subjects,
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-original\". }"
-<<<<<<< HEAD
                             + " WHERE { }", new RdfStream(), containerService);
-=======
-                            + " WHERE { }", new RdfStream());
->>>>>>> Propagating new Stream type out from RdfStream
         } catch (final AccessDeniedException e) {
             fail("Should fail at update, not create property");
         }

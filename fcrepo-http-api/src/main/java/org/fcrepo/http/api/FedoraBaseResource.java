@@ -91,13 +91,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 json.addProperty("userAgent",headers.getHeaderString("user-agent"));
             }
             obs.setUserData(json.toString());
-<<<<<<< HEAD
-        } catch ( final Exception ex ) {
-=======
         } catch (final RepositoryException ex) {
->>>>>>> Bringing Java8 idioms to other modules
             LOGGER.warn("Error setting baseURL", ex);
         }
     }
-
 }

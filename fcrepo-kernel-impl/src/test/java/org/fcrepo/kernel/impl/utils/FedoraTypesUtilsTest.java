@@ -252,19 +252,11 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testIsBlanknode() throws RepositoryException {
-<<<<<<< HEAD
         when(mockNode.isNodeType(FEDORA_SKOLEMNODE)).thenReturn(true);
-        assertTrue("Expected to be a blank node", isSkolemNode.apply(mockNode));
+        assertTrue("Expected to be a blank node", isSkolemNode.test(mockNode));
 
         when(mockNode.isNodeType(FEDORA_SKOLEMNODE)).thenReturn(false);
-        assertFalse("Expected to not be a blank node", isSkolemNode.apply(mockNode));
-=======
-        when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(true);
-        assertTrue("Expected to be a blank node", isBlankNode.test(mockNode));
-
-        when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(false);
-        assertFalse("Expected to not be a blank node", isBlankNode.test(mockNode));
->>>>>>> Propagating new Stream type out from RdfStream
+        assertFalse("Expected to not be a blank node", isSkolemNode.test(mockNode));
     }
 
     @Test

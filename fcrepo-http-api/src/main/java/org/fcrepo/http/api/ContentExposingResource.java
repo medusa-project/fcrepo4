@@ -74,7 +74,6 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.Deskolemizer;
-import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
@@ -193,7 +192,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
-        return ok(rdfStream.map(deskolemizer())).build();
+        return ok(rdfStream.transform(deskolemizer())).build();
     }
 
     protected RdfStream getResourceTriples() {
@@ -278,7 +277,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
         }
 
-        return rdfStream.map(deskolemizer());
+        return rdfStream.transform(deskolemizer());
     }
 
     /**

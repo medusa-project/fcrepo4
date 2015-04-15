@@ -39,21 +39,9 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
-<<<<<<< HEAD
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isSkolemNode;
-=======
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
-<<<<<<< HEAD
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
-<<<<<<< HEAD
->>>>>>> Propagating new Stream type out from RdfStream
-=======
-import static org.fcrepo.kernel.impl.utils.UncheckedFunction.uncheck;
->>>>>>> Minor code shortening
-=======
 import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
->>>>>>> Further propagation of the Streams API
 
 /**
  * Embed all blank nodes in the RDF stream
@@ -87,44 +75,16 @@ public class BlankNodeRdfContext extends NodeRdfContext {
                 n -> nodeConverter.convert(n).getTriples(translator(), TRIPLE_GENERATORS));
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    private Iterator<Node> getBlankNodesIterator() throws RepositoryException {
-        final Iterator<Property> properties = resource().getNode().getProperties();
-
-        final Iterator<Property> references = Iterators.filter(properties, filterReferenceProperties);
-
-        final Iterator<Node> nodes = Iterators.transform(new PropertyValueIterator(references), getNodesForValue);
-
-        return Iterators.filter(nodes, isSkolemNode);
-=======
-    private Stream<Node> getBlankNodesIterator() throws RepositoryException {
-        final Iterator<Property> propertiesIterator = resource().getNode().getProperties();
-        final Stream<Property> references = fromIterator(propertiesIterator).filter(filterReferenceProperties);
-<<<<<<< HEAD
-        return fromIterator(new PropertyValueIterator(references)).map(getNodesForValue).filter(isBlankNode);
->>>>>>> Propagating new Stream type out from RdfStream
-=======
-        return new PropertyValueStream(references).map(getNodesForValue).filter(isBlankNode);
->>>>>>> Stream-ifying Property-Value conversion
-=======
     private Stream<Node> getBlankNodesIterator(final Node n) throws RepositoryException {
         final Iterator<Property> propertiesIterator = n.getProperties();
         final Stream<Property> references = fromIterator(propertiesIterator).filter(filterReferenceProperties);
         return new PropertyValueStream(references)
                 .map(uncheck(v ->
                         v.getType() == PATH ? session().getNode(v.getString()) : session().getNodeByIdentifier(
-                                v.getString()))).filter(isBlankNode);
->>>>>>> Further lazi-fying RDF generation
+                                v.getString()))).filter(isSkolemNode);
     }
 
     private static final Predicate<Property> filterReferenceProperties = UncheckedPredicate
             .uncheck(p -> referencePropertyTypes.contains(p.getType()));
 
-<<<<<<< HEAD
-    private final Function<Value, Node> getNodesForValue = uncheck(v ->
-            v.getType() == PATH ? session().getNode(v.getString()) : session().getNodeByIdentifier(v.getString()));
 }
-=======
-}
->>>>>>> Further lazi-fying RDF generation

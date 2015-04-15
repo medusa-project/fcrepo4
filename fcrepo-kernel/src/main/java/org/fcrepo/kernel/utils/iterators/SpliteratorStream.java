@@ -220,6 +220,16 @@ public abstract class SpliteratorStream<T, SelfType extends SpliteratorStream<T,
         return upcastStream().map(f);
     }
 
+    /**
+     * As {@link #map(Function)}, but preserves context.
+     *
+     * @param f
+     * @return a transformed version of this stream
+     */
+    public SelfType transform(final Function<? super T, ? extends T> f) {
+        return withThisContext(map(f));
+    }
+
     @Override
     public IntStream mapToInt(final ToIntFunction<? super T> f) {
         return upcastStream().mapToInt(f);

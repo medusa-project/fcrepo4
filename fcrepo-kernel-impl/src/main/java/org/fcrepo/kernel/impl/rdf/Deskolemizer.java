@@ -22,6 +22,8 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.function.Function;
+
 import javax.jcr.AccessDeniedException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -30,7 +32,6 @@ import org.fcrepo.kernel.models.FedoraResource;
 
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.cache.LoadingCache;
 import com.hp.hpl.jena.graph.Triple;

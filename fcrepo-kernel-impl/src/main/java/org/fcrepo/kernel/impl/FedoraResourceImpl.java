@@ -16,15 +16,7 @@
 package org.fcrepo.kernel.impl;
 
 import static com.google.common.base.Throwables.propagate;
-<<<<<<< HEAD
-import static com.google.common.collect.Iterators.concat;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.singletonIterator;
-import static com.google.common.collect.Iterators.transform;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-=======
->>>>>>> Further propagation of the Streams API
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.function.Function.identity;
@@ -58,44 +50,36 @@ import javax.jcr.Value;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import com.google.common.base.Converter;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-
 import org.fcrepo.kernel.FedoraJcrTypes;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-<<<<<<< HEAD
 import org.fcrepo.kernel.impl.rdf.Deskolemizer;
 import org.fcrepo.kernel.impl.rdf.HashURIDetector;
 import org.fcrepo.kernel.impl.rdf.Skolemizer;
-import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
-<<<<<<< HEAD
-import org.fcrepo.kernel.services.Service;
-=======
-=======
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueStream;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.UncheckedConsumer;
->>>>>>> Rebasing
-import org.fcrepo.kernel.utils.UncheckedFunction;
-import org.fcrepo.kernel.utils.UncheckedPredicate;
->>>>>>> Further propagation of the Streams API
-import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.services.Service;
+import org.fcrepo.kernel.utils.UncheckedConsumer;
+import org.fcrepo.kernel.utils.UncheckedFunction;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
+import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
+import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.impl.StmtIteratorImpl;
 import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.util.iterator.Map1;
@@ -365,9 +349,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final Model maybeModel = idTranslator.reverse().convert(this).getModel();
         final Model context = maybeModel == null ? createDefaultModel() : maybeModel;
 
-        final Deskolemizer deskolemize = new Deskolemizer(idTranslator, context);
+        final Deskolemizer deskolemizer = new Deskolemizer(idTranslator, context);
 
-        final Model model = originalTriples.withThisContext(originalTriples.transform(deskolemize)).asModel();
+        final Model model = originalTriples.transform(deskolemizer).asModel();
 
         final JcrPropertyStatementListener listener =
                 new JcrPropertyStatementListener(idTranslator, getSession(), this, skolemService);
