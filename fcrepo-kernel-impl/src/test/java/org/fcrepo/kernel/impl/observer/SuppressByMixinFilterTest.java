@@ -64,12 +64,12 @@ public class SuppressByMixinFilterTest {
     @Test
     public void shouldSuppressMixin() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer, internalEvent});
-        assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
+        assertFalse(testObj.getFilter(mockSession).test(mockEvent));
     }
 
     @Test
     public void shouldAllowOthers() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.getFilter(mockSession).test(mockEvent));
     }
 }

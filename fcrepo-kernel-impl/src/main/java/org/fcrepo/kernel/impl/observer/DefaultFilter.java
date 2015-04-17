@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.disjoint;
 import static java.util.stream.Collectors.toList;
@@ -28,9 +27,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.function.Predicate;
-
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -44,9 +40,8 @@ import org.slf4j.Logger;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
- * JCR type, or properties attached to them, except in the case of a node
- * removal. In that case, since we cannot test the node for its types, we assume
- * that any non-JCR namespaced node is fair game.
+ * JCR mixin type, or properties attached to them, except in the case of a node
+ * removal.
  *
  * @author ajs6f
  * @author barmintor
@@ -58,38 +53,27 @@ import org.slf4j.Logger;
  */
 public class DefaultFilter implements EventFilter {
 
-    private static final List<String> TYPES = asList(FEDORA_RESOURCE, FEDORA_BINARY,
-            FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_CONTAINER);
-
-    private static final HashSet<String> fedoraMixins =
+    private static final HashSet<String> FEDORA_MIXINS =
             newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE);
 
     private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     @Override
-    public Predicate<Event> getFilter(final Session session) {
+    public DefaultFilter getFilter(final Session session) {
         return new DefaultFilter();
     }
 
     @Override
     public boolean test(final Event event) {
-        try {
-            return !disjoint(getMixinTypes(event), fedoraMixins);
-        } catch (final PathNotFoundException e) {
-            LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
-            return false;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return !disjoint(getMixinTypes(event), FEDORA_MIXINS);
     }
 
-    protected static Collection<String> getMixinTypes(final Event event)
-            throws PathNotFoundException, RepositoryException {
+    protected static Collection<String> getMixinTypes(final Event event) {
         try {
             final org.modeshape.jcr.api.observation.Event modeEvent = (org.modeshape.jcr.api.observation.Event) event;
             return stream(modeEvent.getMixinNodeTypes()).map(NodeType::toString).collect(toList());
-    } catch (final ClassCastException e) {
-            throw new ClassCastException(event + " is not a Modeshape Event");
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 }
