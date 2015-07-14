@@ -15,16 +15,15 @@
  */
 package org.fcrepo.kernel.exception;
 
-import javax.jcr.RepositoryException;
-
 /**
- * Indicates that RDF was presented for persistence to the repository,
- * but could not be persisted for some reportable reason.
+ * Indicates that RDF was presented for persistence to the repository, but could not be persisted for some reportable
+ * reason.
  *
  * @author ajs6f
+ * @author whikloj
  * @since Oct 24, 2013
  */
-public class MalformedRdfException extends RepositoryException {
+public class MalformedRdfException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,6 +36,15 @@ public class MalformedRdfException extends RepositoryException {
         super(msg);
     }
 
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param rootCause the root cause
+     */
+    public MalformedRdfException(final Throwable rootCause) {
+        super(rootCause);
+    }
 
     /**
      * Ordinary constructor.

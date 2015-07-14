@@ -19,6 +19,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
+import static java.nio.file.Files.write;
 import static java.util.Arrays.asList;
 import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.kernel.FedoraJcrTypes.CONTENT_SIZE;
@@ -38,7 +39,6 @@ import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -55,9 +55,11 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.Container;
@@ -65,7 +67,7 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -102,18 +104,24 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     /**
      * Gets the path (relative to the filesystem federation) of a directory
      * that's expected to be present.
+     *
+     * @return string that contains the path to the dir
      */
     protected abstract String testDirPath();
 
     /**
      * Gets the path (relative to the filesystem federation) of a file
      * that's expected to be present.
+     *
+     * @return string that contains the path to the file
      */
     protected abstract String testFilePath();
 
     /**
      * The name (relative path) of the federation to be tested.  This
      * must coincide with the "projections" provided in repository.json.
+     *
+     * @return string that contains the path to the federation
      */
     protected abstract String federationName();
 
@@ -122,6 +130,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
      * tested.  This must coincide with the "directoryPath" provided in
      * repository.json (or the system property that's populating the relevant
      * configuration".
+     *
+     * @return string that contains the path to root
      */
     protected abstract String getFederationRoot();
 
@@ -184,7 +194,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
             final String path = f.getAbsolutePath();
             try {
                 Files.deleteIfExists(Paths.get(path));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 logger.error("Error in clean up", e);
                 fail("Unable to delete work files from a previous test run. File=" + path);
             }
@@ -202,7 +212,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_CONTAINER);
+        final boolean found = transform(asList(mixins), NodeType::getName).contains(FEDORA_CONTAINER);
         assertTrue("Mixin not found: " + FEDORA_CONTAINER, found);
 
         session.save();
@@ -221,7 +231,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name)
+        final boolean found = transform(asList(mixins), NodeType::getName)
                 .contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         assertTrue("Mixin not found: " + FEDORA_NON_RDF_SOURCE_DESCRIPTION, found);
 
@@ -239,10 +249,10 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
+        final boolean found = transform(asList(mixins), NodeType::getName).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
-        final File file = fileForNode(node);
+        final File file = fileForNode();
 
         assertTrue(file.getAbsolutePath(), file.exists());
         assertEquals(file.length(), node.getProperty(CONTENT_SIZE).getLong());
@@ -269,8 +279,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final String originalFixity = checkFixity(binary);
 
-        final File file = fileForNode(null);
-        appendToFile(file, " ");
+        final File file = fileForNode();
+        write(file.toPath(), " ".getBytes("UTF-8"));
 
         final String newFixity = checkFixity(binary);
 
@@ -280,17 +290,11 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         session.logout();
     }
 
-    private static void appendToFile(final File f, final String data) throws IOException {
-        try (final FileOutputStream fos = new FileOutputStream(f, true)) {
-            fos.write(data.getBytes("UTF-8"));
-        }
-    }
-
     private String checkFixity(final FedoraBinary binary)
             throws IOException, NoSuchAlgorithmException, RepositoryException {
         assertNotNull(binary);
 
-        final File file = fileForNode(null);
+        final File file = fileForNode();
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
@@ -310,7 +314,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         return calculatedChecksum.toString();
     }
 
-    protected File fileForNode(@SuppressWarnings("unused") final Node node) {
+    protected File fileForNode() {
         return new File(getFederationRoot(), testFilePath().replace(federationName(), ""));
     }
 
@@ -319,11 +323,14 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
      * but it's critical that we test that the json files are actually written
      * somewhere, so it's the best I can do without further opening up the
      * internals of JsonSidecarExtraPropertiesStore.
+     *
+     * @param node The node to access for the file reference
+     * @return A reference to the nodes property file
      */
     protected File propertyFileForNode(final Node node) {
         try {
             System.out.println("NODE PATH: " + node.getPath());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         return new File(getProperty(PROP_EXT_TEST_DIR),

@@ -21,22 +21,22 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -51,6 +51,7 @@ import com.hp.hpl.jena.sparql.core.DatasetImpl;
  *
  * @author cbeer
  */
+@RunWith(MockitoJUnitRunner.class)
 public class QueryExecutionProviderTest {
 
     @Mock
@@ -66,14 +67,10 @@ public class QueryExecutionProviderTest {
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
-                new Triple(createURI("test:subject"), primaryTypePredicate,
+                new Triple(createURI("test:subject"),
+                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
                         createLiteral("nt:file")));
 
-    }
-
-    @Before
-    public void setUp() {
-        initMocks(this);
     }
 
     @Test

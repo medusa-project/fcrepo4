@@ -15,27 +15,25 @@
  */
 package org.fcrepo.jms.headers;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Set;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
+
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 
 /**
  * Generates JMS {@link Message}s composed entirely of headers, based entirely
@@ -66,6 +64,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
     public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
+    public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + "eventID";
 
     private String baseURL;
     private String userAgent;
@@ -84,7 +83,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         // extract baseURL and userAgent from event UserData
         try {
             final String userdata = jcrEvent.getUserData();
-            if (!StringUtils.isBlank(userdata)) {
+            if (!isNullOrEmpty(userdata)) {
                 final ObjectMapper mapper = new ObjectMapper();
                 final JsonNode json = mapper.readTree(userdata);
                 String url = json.get("baseURL").asText();
@@ -109,20 +108,20 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
-        message.setStringProperty(PROPERTIES_HEADER_NAME, Joiner.on(',').join(jcrEvent.getProperties()));
+        message.setStringProperty(PROPERTIES_HEADER_NAME, String.join(",", jcrEvent.getProperties()));
+        message.setStringProperty(EVENT_ID_HEADER_NAME, jcrEvent.getEventID());
 
         LOGGER.trace("getMessage() returning: {}", message);
         return message;
     }
 
     private static String getEventURIs(final Set<Integer> types) {
-        final String uris = Joiner.on(',').join(Iterables.transform(types, new Function<Integer, String>() {
+        final String uris = types.stream()
+                                 .map(EventType::valueOf)
+                                 .map(EventType::toString)
+                                 .map(REPOSITORY_NAMESPACE::concat)
+                                 .collect(joining(","));
 
-            @Override
-            public String apply(final Integer type) {
-                return REPOSITORY_NAMESPACE + EventType.valueOf(type);
-            }
-        }));
         LOGGER.debug("Constructed event type URIs: {}", uris);
         return uris;
     }

@@ -28,6 +28,7 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -39,6 +40,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -366,6 +368,8 @@ public class FedoraLdp extends ContentExposingResource {
             addCacheControlHeaders(servletResponse, resource(), session);
 
             return noContent().build();
+        } catch (final IllegalArgumentException iae) {
+            throw new BadRequestException(iae.getMessage());
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
             if (cause instanceof PathNotFoundException) {
@@ -413,6 +417,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
+        } else if (resource().hasType(FEDORA_PAIRTREE)) {
+            throw new ClientErrorException("Objects cannot be created under pairtree nodes", FORBIDDEN);
         }
 
         final MediaType contentType = getSimpleContentType(requestContentType);
@@ -596,7 +602,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (slug != null && !slug.isEmpty()) {
             pid = slug;
         } else {
-            pid = pidMinter.mintPid();
+            pid = pidMinter.get();
         }
         // reverse translate the proffered or created identifier
         LOGGER.trace("Using external identifier {} to create new resource.", pid);

@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.commons;
 
+import java.util.function.Supplier;
+
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -25,20 +27,18 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.VersionService;
+
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
 
 /**
- * Superclass for Fedora JAX-RS Resources, providing convenience fields
- * and methods.
+ * Superclass for Fedora JAX-RS Resources, providing convenience fields and methods.
  *
  * @author ajs6f
  */
@@ -63,31 +63,31 @@ public class AbstractResource {
     @Context
     protected HttpHeaders headers;
 
-    @Autowired
+    @Inject
     protected SessionFactory sessions;
 
     /**
-     * The fcrepo node service
+     * The JCR node service
      */
-    @Autowired
+    @Inject
     protected NodeService nodeService;
 
     /**
-     * The fcrepo object service
+     * The repository object service
      */
-    @Autowired
+    @Inject
     protected ContainerService containerService;
 
     /**
-     * The fcrepo datastream service
+     * The bitstream service
      */
-    @Autowired
+    @Inject
     protected BinaryService binaryService;
 
     /**
-     * The fcrepo version service
+     * The version service
      */
-    @Autowired
+    @Inject
     protected VersionService versionService;
 
     @Inject
@@ -97,8 +97,8 @@ public class AbstractResource {
     /**
      * A resource that can mint new Fedora PIDs.
      */
-    @Autowired
-    protected PidMinter pidMinter;
+    @Inject
+    protected Supplier<String> pidMinter;
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
@@ -114,10 +114,7 @@ public class AbstractResource {
 
         final String path = idTranslator.asString(resource);
 
-        if (path.isEmpty()) {
-            return "/";
-        }
-        return path;
+        return path.isEmpty() ? "/" : path;
     }
 
 }

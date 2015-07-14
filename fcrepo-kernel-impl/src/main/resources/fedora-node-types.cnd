@@ -68,9 +68,9 @@
 [fedora:Binary] > fedora:Resource mixin
   - premis:hasOriginalName (STRING)
   - premis:hasSize (LONG) COPY
-  - fedora:digest (URI) COPY
+  - premis:hasMessageDigest (URI) COPY
 
-[fedora:Blanknode] > mix:referenceable mixin
+[fedora:Skolem] > mix:referenceable mixin
 
 [fedora:Pairtree] mixin
 

@@ -20,13 +20,11 @@ import static com.google.common.collect.Iterators.size;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static org.jgroups.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import javax.jcr.RepositoryException;
@@ -37,7 +35,9 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Iterator;
 
@@ -46,25 +46,18 @@ import java.util.Iterator;
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AllNodeEventsOneEventTest {
 
-    private static final String TEST_IDENTIFIER1 = randomUUID().toString();
 
     private static final String TEST_PATH1 = "/test/node1";
 
-    private static final String TEST_IDENTIFIER2 = TEST_IDENTIFIER1;
-
     private static final String TEST_PATH2 = TEST_PATH1 + "/dc:title";
 
-    private static final String TEST_IDENTIFIER3 = randomUUID().toString();
-
-    private static final String TEST_PATH3 = "/test/node2";
-
-    private static final String TEST_IDENTIFIER4 = randomUUID().toString();
+    private static final String TEST_NODE_PATH3 = "/test/node2";
+    private static final String TEST_PATH3 = TEST_NODE_PATH3 + "/dc:description";
 
     private static final String TEST_PATH4 = "/test/node3";
-
-    private static final String TEST_IDENTIFIER5 = randomUUID().toString();
 
     private static final String TEST_PATH5 = "/test/node3/" + JCR_CONTENT;
 
@@ -96,23 +89,17 @@ public class AllNodeEventsOneEventTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
-        when(mockEvent1.getIdentifier()).thenReturn(TEST_IDENTIFIER1);
         when(mockEvent1.getPath()).thenReturn(TEST_PATH1);
         when(mockEvent1.getType()).thenReturn(NODE_ADDED);
-        when(mockEvent2.getIdentifier()).thenReturn(TEST_IDENTIFIER2);
         when(mockEvent2.getPath()).thenReturn(TEST_PATH2);
         when(mockEvent2.getType()).thenReturn(PROPERTY_ADDED);
-        when(mockEvent3.getIdentifier()).thenReturn(TEST_IDENTIFIER3);
         when(mockEvent3.getPath()).thenReturn(TEST_PATH3);
         when(mockEvent3.getType()).thenReturn(PROPERTY_CHANGED);
         when(mockIterator.next()).thenReturn(mockEvent1, mockEvent2, mockEvent3);
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
 
-        when(mockEvent4.getIdentifier()).thenReturn(TEST_IDENTIFIER4);
         when(mockEvent4.getPath()).thenReturn(TEST_PATH4);
         when(mockEvent4.getType()).thenReturn(NODE_ADDED);
-        when(mockEvent5.getIdentifier()).thenReturn(TEST_IDENTIFIER5);
         when(mockEvent5.getPath()).thenReturn(TEST_PATH5);
         when(mockEvent5.getType()).thenReturn(NODE_ADDED);
         when(mockIterator2.next()).thenReturn(mockEvent4, mockEvent5);
@@ -148,12 +135,12 @@ public class AllNodeEventsOneEventTest {
     @Test(expected = RuntimeException.class)
     public void testBadEvent() throws RepositoryException {
         reset(mockEvent1);
-        when(mockEvent1.getIdentifier()).thenThrow(new RepositoryException("Expected."));
+        when(mockEvent1.getPath()).thenThrow(new RepositoryException("Expected."));
         testMapping.apply(mockIterator);
     }
 
     @Test
-    public void testPropertyEvents() throws RepositoryException {
+    public void testPropertyEvents() {
         final Iterator<FedoraEvent> iterator = testMapping.apply(mockIterator);
         assertNotNull(iterator);
         assertTrue("Iterator is empty!", iterator.hasNext());
@@ -161,7 +148,7 @@ public class AllNodeEventsOneEventTest {
         boolean found = false;
         while (iterator.hasNext()) {
             final FedoraEvent event = iterator.next();
-            if (TEST_IDENTIFIER3.equals(event.getIdentifier())) {
+            if (TEST_NODE_PATH3.equals(event.getPath())) {
                 assertEquals("Expected one event property", 1, event.getProperties().size());
                 found = true;
             }

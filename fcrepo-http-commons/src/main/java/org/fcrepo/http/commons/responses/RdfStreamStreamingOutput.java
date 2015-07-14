@@ -15,22 +15,22 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.collect.Maps.filterEntries;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static org.fcrepo.kernel.utils.UncheckedBiConsumer.uncheck;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.function.Function;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -44,8 +44,6 @@ import org.openrdf.rio.Rio;
 import org.openrdf.rio.WriterConfig;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -64,7 +62,17 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static ValueFactory vfactory = getInstance();
 
+    /**
+     * This field is used to determine the correct {@link org.openrdf.rio.RDFWriter} created for the
+     * {@link javax.ws.rs.core.StreamingOutput}.
+     */
     private final RDFFormat format;
+
+    /**
+     * This field is used to determine the {@link org.openrdf.rio.WriterConfig} details used by the created
+     * {@link org.openrdf.rio.RDFWriter}.
+     */
+    private final MediaType mediaType;
 
     private final RdfStream rdfStream;
 
@@ -81,13 +89,13 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         if (LOGGER.isDebugEnabled()) {
             for (final RDFFormat writeableFormats : RDFWriterRegistry.getInstance().getKeys()) {
                 LOGGER.debug("Discovered RDF writer writeableFormats: {} with mimeTypes: {}",
-                        writeableFormats.getName(), Joiner.on(" ")
-                                .join(writeableFormats.getMIMETypes()));
+                        writeableFormats.getName(), String.join(" ", writeableFormats.getMIMETypes()));
             }
         }
         final RDFFormat format = Rio.getWriterFormatForMIMEType(mediaType.toString());
         if (format != null) {
             this.format = format;
+            this.mediaType = mediaType;
             LOGGER.debug("Setting up to serialize to: {}", format);
         } else {
             throw new WebApplicationException(NOT_ACCEPTABLE);
@@ -100,7 +108,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     public void write(final OutputStream output) {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
-            write(asStatements(), output, format);
+            write(() -> rdfStream.transform(toStatement::apply), output, format, mediaType);
         } catch (final RDFHandlerException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e);
@@ -110,94 +118,56 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private void write(final Iterable<Statement> model,
                        final OutputStream output,
-                       final RDFFormat dataFormat)
+                       final RDFFormat dataFormat,
+                       final MediaType dataMediaType)
             throws RDFHandlerException {
-        final WriterConfig settings = new WriterConfig();
+        final WriterConfig settings = WriterConfigHelper.apply(dataMediaType);
         final RDFWriter writer = Rio.createWriter(dataFormat, output);
         writer.setWriterConfig(settings);
 
-        for (final Map.Entry<String, String> namespace : excludeProtectedNamespaces(rdfStream.namespaces())) {
-            writer.handleNamespace(namespace.getKey(), namespace.getValue());
-        }
-
-        Rio.write(model, writer);
-    }
-
-    private static Iterable<Map.Entry<String, String>> excludeProtectedNamespaces(
-            final Map<String, String> namespaces) {
         /**
          * We exclude:
          *  - xmlns, which Sesame helpfully serializes, but normal parsers may complain
          *     about in some serializations (e.g. RDF/XML where xmlns:xmlns is forbidden by XML);
          */
-        return Iterables.filter(namespaces.entrySet(), new Predicate<Map.Entry<String, String>>() {
-            @Override
-            public boolean apply(final Map.Entry<String, String> input) {
-                return !input.getKey().equals("xmlns");
-            }
-        });
+        filterEntries(rdfStream.namespaces(), e -> !e.getKey().equals("xmlns"))
+                .forEach(uncheck(writer::handleNamespace));
+
+        Rio.write(model, writer);
     }
 
-
-    private Iterable<Statement> asStatements() {
-        return new Iterable<Statement>() {
-
-            @Override
-            public Iterator<Statement> iterator() {
-                return rdfStream.transform(toStatement);
-            }
-        };
-    }
-
-    protected static final Function<? super Triple, Statement> toStatement =
-        new Function<Triple, Statement>() {
-
-            @Override
-            public Statement apply(final Triple t) {
-                final Resource subject = getResourceForSubject(t.getSubject());
-                final URI predicate = vfactory.createURI(t.getPredicate().getURI());
-                final Value object = getValueForObject(t.getObject());
-                return vfactory.createStatement(subject, predicate, object);
-            }
-
-        };
+    protected static final Function<? super Triple, Statement> toStatement = t -> {
+        final Resource subject = getResourceForSubject(t.getSubject());
+        final URI predicate = vfactory.createURI(t.getPredicate().getURI());
+        final Value object = getValueForObject(t.getObject());
+        return vfactory.createStatement(subject, predicate, object);
+    };
 
     private static Resource getResourceForSubject(final Node subjectNode) {
-        final Resource subject;
-
-        if (subjectNode.isBlank()) {
-            subject = vfactory.createBNode(subjectNode.getBlankNodeLabel());
-        } else {
-            subject = vfactory.createURI(subjectNode.getURI());
-        }
-
-        return subject;
+        return subjectNode.isBlank() ? vfactory.createBNode(subjectNode.getBlankNodeLabel())
+                : vfactory.createURI(subjectNode.getURI());
     }
 
     protected static Value getValueForObject(final Node object) {
-        final Value value;
         if (object.isURI()) {
-            value = vfactory.createURI(object.getURI());
+            return vfactory.createURI(object.getURI());
         } else if (object.isBlank()) {
-            value = vfactory.createBNode(object.getBlankNodeLabel());
+            return vfactory.createBNode(object.getBlankNodeLabel());
         } else if (object.isLiteral()) {
             final String literalValue = object.getLiteralLexicalForm();
 
             final String literalDatatypeURI = object.getLiteralDatatypeURI();
 
             if (!object.getLiteralLanguage().isEmpty()) {
-                value = vfactory.createLiteral(literalValue, object.getLiteralLanguage());
+                return vfactory.createLiteral(literalValue, object.getLiteralLanguage());
             } else if (literalDatatypeURI != null) {
                 final URI uri = vfactory.createURI(literalDatatypeURI);
-                value = vfactory.createLiteral(literalValue, uri);
+                return vfactory.createLiteral(literalValue, uri);
             } else {
-                value = createLiteral(vfactory, object.getLiteralValue());
+                return createLiteral(vfactory, object.getLiteralValue());
             }
-        } else {
-            // should not happen..
-            throw new AssertionError("Unable to convert " + object + " to a value");
         }
-
-        return value;
+        throw new AssertionError("Unable to convert " + object +
+                " to a value, it is neither URI, blank, nor literal!");
     }
 }

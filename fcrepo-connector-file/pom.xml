@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>4.1.2-SNAPSHOT</version>
+    <version>4.2.1-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-connector-file</artifactId>
   <name>Fedora Repository FileSystem Connector Module</name>
@@ -64,8 +64,7 @@
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
               org.fcrepo.connector;version=${project.version},
-              org.fcrepo.connector.file;version=${project.version},
-              org.modeshape.connector.filesystem;version=${project.version}
+              org.fcrepo.connector.file;version=${project.version}
             </Export-Package>
             <Import-Package>
               org.fcrepo.kernel,

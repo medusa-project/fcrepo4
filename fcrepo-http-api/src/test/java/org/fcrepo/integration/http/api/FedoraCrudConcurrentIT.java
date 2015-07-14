@@ -35,7 +35,7 @@ import org.junit.Test;
  * This "test" is a utility for collecting the timing of concurrent operations operations.
  * It takes roughly 2 minutes to complete and should only be run if the timing metrics are wanted.
  * In order to activate this utility, the following System Property must be set:
- * <p/>
+ * &lt;p/&gt;
  * mvn -Dfcrepo.test.http.concurrent install
  *
  * @author lsitu
@@ -77,7 +77,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         // Create object
         logger.info("# Starting " + numThreads + " concurrent threads to create object...");
         for (int i = 0; i < numThreads; i++) {
-            pid = getRandomUniquePid();
+            pid = getRandomUniqueId();
             pids.add(pid);
             final String taskName = "Thread " + (i + 1) + " to create object " + pid;
             final HttpRequestBase request = postObjMethod("/");

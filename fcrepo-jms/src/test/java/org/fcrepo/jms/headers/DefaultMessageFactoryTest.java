@@ -15,6 +15,7 @@
  */
 package org.fcrepo.jms.headers;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
@@ -24,33 +25,35 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.Set;
 
-import javax.jcr.RepositoryException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
-import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>DefaultMessageFactoryTest class.</p>
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultMessageFactoryTest {
 
     @Mock
@@ -63,46 +66,43 @@ public class DefaultMessageFactoryTest {
 
     @Before
     public void setUp() throws JMSException {
-        initMocks(this);
-        when(mockSession.createMessage()).thenReturn(
-                new ActiveMQObjectMessage());
+        when(mockSession.createMessage()).thenReturn(new ActiveMQObjectMessage());
         testDefaultMessageFactory = new DefaultMessageFactory();
     }
 
     @Test
-    public void testBuildMessage() throws RepositoryException, JMSException {
+    public void testBuildMessage() throws JMSException {
         final String testPath = "/path/to/resource";
-        final String userAgent = "Test UserAgent (Like Mozilla)";
         final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
     @Test (expected = Exception.class)
-    public void testBuildMessageException() throws RepositoryException, JMSException {
+    public void testBuildMessageException() throws JMSException {
         doThrow(Exception.class).when(mockEvent).getUserData();
         testDefaultMessageFactory.getMessage(mockEvent, mockSession);
     }
 
     @Test
-    public void testBuildMessageNullUrl() throws RepositoryException, JMSException {
+    public void testBuildMessageNullUrl() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage(null, null, testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
     @Test
-    public void testBuildMessageContent() throws RepositoryException, JMSException {
+    public void testBuildMessageContent() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url/", "Test UserAgent", testPath + "/" + JCR_CONTENT);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
-            throws RepositoryException, JMSException {
+            throws JMSException {
         final Long testDate = 46647758568747L;
         when(mockEvent.getDate()).thenReturn(testDate);
 
         String url = null;
-        if (!StringUtils.isBlank(baseUrl) || !StringUtils.isBlank(userAgent)) {
+        if (!isNullOrEmpty(baseUrl) || !isNullOrEmpty(userAgent)) {
             url = "{\"baseURL\":\"" + baseUrl + "\",\"userAgent\":\"" + userAgent + "\"}";
         }
         when(mockEvent.getUserData()).thenReturn(url);
@@ -114,11 +114,13 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getTypes()).thenReturn(testTypes);
         final String prop = "test-property";
         when(mockEvent.getProperties()).thenReturn(singleton(prop));
+        final String eventID = "abcdefg12345678";
+        when(mockEvent.getEventID()).thenReturn(eventID);
 
         final Message msg = testDefaultMessageFactory.getMessage(mockEvent, mockSession);
 
         String trimmedBaseUrl = baseUrl;
-        while (!StringUtils.isBlank(trimmedBaseUrl) && trimmedBaseUrl.endsWith("/")) {
+        while (!isNullOrEmpty(trimmedBaseUrl) && trimmedBaseUrl.endsWith("/")) {
             trimmedBaseUrl = trimmedBaseUrl.substring(0, trimmedBaseUrl.length() - 1);
         }
 
@@ -128,6 +130,7 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
         assertEquals("Got wrong userID in message", testUser, msg.getStringProperty(USER_HEADER_NAME));
         assertEquals("Got wrong userAgent in message", userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME));
+        assertEquals("Got wrong eventID in message", eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME));
         return msg;
     }
 

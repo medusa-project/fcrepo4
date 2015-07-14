@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
@@ -90,7 +89,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     private void initializeNewBinaryProperties() {
         try {
             decorateContentNode(node);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
         }
     }
@@ -283,15 +282,16 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
         try (final Timer.Context context = timer.time()) {
 
-            final Repository repo = node.getSession().getRepository();
             LOGGER.debug("Checking resource: " + getPath());
 
             final String algorithm = ContentDigest.getAlgorithm(digestUri);
 
-            final Collection<FixityResult> fixityResults
-                    = CacheEntryFactory.forProperty(repo, getProperty(JCR_DATA)).checkFixity(algorithm);
+            final long contentSize = size < 0 ? getBinaryContent().getSize() : size;
 
-            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, size);
+            final Collection<FixityResult> fixityResults
+                    = CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithm);
+
+            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -374,6 +374,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      * @return whether the given node is a Fedora binary
      */
     public static boolean hasMixin(final Node node) {
-        return isFedoraBinary.apply(node);
+        return isFedoraBinary.test(node);
     }
 }

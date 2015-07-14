@@ -15,6 +15,9 @@
  */
 package org.fcrepo.kernel;
 
+import static com.google.common.collect.ImmutableList.of;
+import java.util.List;
+
 /**
  * Convenience class with constants for commonly used JCR types.
  *
@@ -33,7 +36,7 @@ public interface FedoraJcrTypes {
 
     String FEDORA_TOMBSTONE = "fedora:Tombstone";
 
-    String FEDORA_BLANKNODE = "fedora:Blanknode";
+    String FEDORA_SKOLEM = "fedora:Skolem";
 
     String FEDORA_CONTAINER = "fedora:Container";
 
@@ -55,7 +58,7 @@ public interface FedoraJcrTypes {
 
     String CONTENT_SIZE = "premis:hasSize";
 
-    String CONTENT_DIGEST = "fedora:digest";
+    String CONTENT_DIGEST = "premis:hasMessageDigest";
 
     String FCR_METADATA = "fcr:metadata";
 
@@ -69,8 +72,6 @@ public interface FedoraJcrTypes {
 
     String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
 
-    String JCR_UUID = "jcr:uuid";
-
     String JCR_PRIMARY_TYPE = "jcr:primaryType";
 
     String JCR_MIXIN_TYPES = "jcr:mixinTypes";
@@ -81,7 +82,6 @@ public interface FedoraJcrTypes {
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
     String LDP_MEMBER_RESOURCE = "ldp:membershipResource";
 
-    String [] EXPOSED_PROTECTED_JCR_TYPES
-        = new String[] { JCR_UUID, JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,
-                         JCR_PRIMARY_TYPE, JCR_MIXIN_TYPES };
+    List<String> EXPOSED_PROTECTED_JCR_TYPES = of(JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,
+            JCR_PRIMARY_TYPE, JCR_MIXIN_TYPES);
 }

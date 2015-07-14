@@ -17,9 +17,10 @@ package org.fcrepo.kernel.exception;
 
 /**
  * @author cabeer
+ * @author whikloj
  * @since 10/1/14
  */
-public class ServerManagedPropertyException extends RepositoryRuntimeException {
+public class ServerManagedPropertyException extends ConstraintViolationException {
 
     private static final long serialVersionUID = 1L;
 

@@ -27,12 +27,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.EventType;
+import org.fcrepo.mint.UUIDPathMinter;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -48,9 +50,12 @@ import com.google.common.collect.Iterables;
 public class FedoraEvent {
 
     private Event e;
+    private final String eventID;
 
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
+
+    private static final Supplier<String> pidMinter = new UUIDPathMinter();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -59,6 +64,7 @@ public class FedoraEvent {
      */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
+        eventID = pidMinter.get();
         this.e = e;
     }
 
@@ -70,6 +76,7 @@ public class FedoraEvent {
      */
     public FedoraEvent(final FedoraEvent e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
+        eventID = e.getEventID();
         this.e = e.e;
     }
 
@@ -141,17 +148,6 @@ public class FedoraEvent {
     }
 
     /**
-     * @return the node identifer of the underlying JCR {@link Event}s
-     */
-    public String getIdentifier() {
-        try {
-            return e.getIdentifier();
-        } catch (RepositoryException e1) {
-            throw new RepositoryRuntimeException("Error getting event identifier!", e1);
-        }
-    }
-
-    /**
      * @return the info map of the underlying JCR {@link Event}s
      */
     public Map<Object, Object> getInfo() {
@@ -182,6 +178,14 @@ public class FedoraEvent {
         } catch (RepositoryException e1) {
             throw new RepositoryRuntimeException("Error getting event date!", e1);
         }
+    }
+
+    /**
+     * Get the event ID.
+     * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
+    **/
+    public String getEventID() {
+        return eventID;
     }
 
     @Override

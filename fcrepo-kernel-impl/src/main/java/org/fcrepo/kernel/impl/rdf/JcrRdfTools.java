@@ -20,7 +20,7 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -35,6 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -50,7 +51,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
-import org.fcrepo.kernel.identifiers.PidMinter;
+
 import org.fcrepo.kernel.impl.services.AbstractService;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
@@ -61,6 +62,7 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 import org.fcrepo.mint.UUIDPathMinter;
+
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
@@ -106,7 +108,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
-    private static final PidMinter pidMinter =  new UUIDPathMinter();
+    private static final Supplier<String> pidMinter =  new UUIDPathMinter();
 
     /**
      * Constructor with even more context.
@@ -164,7 +166,7 @@ public class JcrRdfTools {
                              final RDFNode data,
                              final String propertyName) throws RepositoryException {
         final ValueFactory valueFactory = node.getSession().getValueFactory();
-        return createValue(valueFactory, data, getPropertyType(node, propertyName));
+        return createValue(valueFactory, data, getPropertyType(node, propertyName).orElse(UNDEFINED));
     }
 
     /**
@@ -409,11 +411,11 @@ public class JcrRdfTools {
 
         if (!skolemizedBnodeMap.containsKey(id)) {
             jcrTools.findOrCreateNode(session, skolemizedPrefix());
-            final String pid = pidMinter.mintPid();
+            final String pid = pidMinter.get();
             final String path = skolemizedPrefix() + pid;
             final Node preexistingNode = getClosestExistingAncestor(session, path);
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
-            orCreateNode.addMixin(FEDORA_BLANKNODE);
+            orCreateNode.addMixin(FEDORA_SKOLEM);
 
             if (preexistingNode != null) {
                 AbstractService.tagHierarchyWithPairtreeMixin(preexistingNode,

@@ -39,8 +39,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+
 import java.util.Collections;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -206,6 +208,8 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
 
         when(mockNode.setProperty(anyString(), any(Value[].class), anyInt())).thenReturn(mockProperty);
 
+        when(mockNode.getIdentifier()).thenReturn(UUID.randomUUID().toString());
+
         testObj.addProperty(mockFedoraResource,
                 createProperty("some:property"),
                 testSubjects.toDomain("x"),
@@ -366,7 +370,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         assertEquals("info:fedora/x", statement.getSubject().toString());
         assertEquals("info:fedora/x", statement.getObject().toString());
         verify(testObj.jcrTools).findOrCreateNode(mockSession, "/.well-known/genid/");
-        verify(mockNode).addMixin(FEDORA_BLANKNODE);
+        verify(mockNode).addMixin(FEDORA_SKOLEM);
         verify(mockNode.getParent()).addMixin(FEDORA_PAIRTREE);
     }
 

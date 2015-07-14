@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
@@ -189,7 +190,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         p = createURI(REPOSITORY_NAMESPACE + "hasNodeType");
         o = createLiteral(FEDORA_RESOURCE);
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
     }
 
@@ -202,14 +203,14 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
 
         // jcr property
-        final Node s = createGraphSubjectNode(object);
+        Node s = createGraphSubjectNode(object);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
-        Node o = createLiteral(object.getNode().getIdentifier());
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, ANY));
 
         // multivalued property
+        s = createGraphSubjectNode(object);
         p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        o = createLiteral(FEDORA_RESOURCE);
+        Node o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_CONTAINER);
@@ -249,7 +250,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         o = createLiteral("this-is-some-subject-stored-as-a-binary");
         assertTrue(graph.contains(s, p, o));
 
-        p = Node.ANY;
+        p = ANY;
         o = createLiteral("jcr-data-should-be-ignored");
         assertFalse(graph.contains(s, p, o));
 
@@ -315,17 +316,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
 
-
-        // jcr property
-        final Node s = createGraphSubjectNode(object);
-        Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
-        Node o = createLiteral(object.getNode().getIdentifier());
-
-        assertTrue(graph.contains(s, p, o));
-
         // multivalued property
-        p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        o = createLiteral(FEDORA_RESOURCE);
+        final Node s = createGraphSubjectNode(object);
+        Node p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
+        Node o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -436,7 +430,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                     subjects,
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-original\". }"
                             + " WHERE { }", new RdfStream());
-        } catch (AccessDeniedException e) {
+        } catch (final AccessDeniedException e) {
             fail("Should fail at update, not create property");
         }
         final AccessControlManager acm = session.getAccessControlManager();
@@ -450,6 +444,67 @@ public class FedoraResourceImplIT extends AbstractIT {
                 subjects,
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-update\". }"
                         + " WHERE { }", new RdfStream());
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testInvalidSparqlUpdateValidation() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "INSERT { <> <http://myurl.org/title/> \"fancy title\" . \n" +
+                " <> <http://myurl.org/title/> \"fancy title 2\" . } WHERE { }",
+                new RdfStream());
+    }
+
+    @Test
+    public void testValidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "DELETE WHERE {" +
+                        "<> <http://www.loc.gov/premis/rdf/v1#hasDateCreatedByApplication> ?o0 ." +
+                        "}; INSERT DATA {" +
+                        "<> <http://purl.org/dc/elements/1.1/title> \"Example Managed binary datastream\" ." +
+                        "}",
+                new RdfStream());
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testInvalidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "DELETE WHERE {" +
+                        "<> <http://www.loc.gov/premis/rdf/v1#hasDateCreatedByApplication> ?o0 ." +
+                        "}; INSERT DATA {" +
+                        "<> <http://purl.org/dc/elements/1.1/title/> \"Example Managed binary datastream\" ." +
+                        "}",
+                new RdfStream());
+    }
+
+    @Test
+    public void testValidSparqlUpdateValidation1() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "INSERT { <> <http://myurl.org/title> \"5\" . } WHERE { }",
+                new RdfStream());
+    }
+
+    @Test
+    public void testValidSparqlUpdateValidation2() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "PREFIX dsc:<http://myurl.org/title> \n" +
+                        "INSERT { <> dsc:p \"ccc\" } WHERE { }",
+                new RdfStream());
     }
 
     @Test
