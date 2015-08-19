@@ -16,8 +16,7 @@
 package org.fcrepo.mint;
 
 import static org.slf4j.LoggerFactory.getLogger;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import org.slf4j.Logger;
 
@@ -25,7 +24,6 @@ import com.codahale.metrics.annotation.Timed;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.function.Supplier;
 
 import org.w3c.dom.Document;
 
@@ -50,6 +48,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.xml.sax.SAXException;
 
 
@@ -59,7 +58,7 @@ import org.xml.sax.SAXException;
  * @author escowles
  * @since 04/28/2014
  */
-public class HttpPidMinter implements Supplier<String> {
+public class HttpPidMinter implements UniqueValueSupplier {
 
     private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
     private static final Logger LOGGER = getLogger(HttpPidMinter.class);
@@ -90,14 +89,16 @@ public class HttpPidMinter implements Supplier<String> {
     public HttpPidMinter( final String url, final String method, final String username,
         final String password, final String regex, final String xpath ) {
 
-        checkArgument( !isNullOrEmpty(url), "Minter URL must be specified!" );
+        if (isBlank(url)) {
+            throw new IllegalArgumentException("Minter URL must be specified!");
+        }
 
         this.url = url;
         this.method = (method == null ? "post" : method);
         this.username = username;
         this.password = password;
         this.regex = regex;
-        if ( !isNullOrEmpty(xpath) ) {
+        if ( !isBlank(xpath) ) {
             try {
                 this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);
             } catch ( final XPathException ex ) {
@@ -114,7 +115,7 @@ public class HttpPidMinter implements Supplier<String> {
     **/
     protected HttpClient buildClient() {
         HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(connManager);
-        if (!isNullOrEmpty(username) && !isNullOrEmpty(password)) {
+        if (!isBlank(username) && !isBlank(password)) {
             final URI uri = URI.create(url);
             final CredentialsProvider credsProvider = new BasicCredentialsProvider();
             credsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()),
@@ -147,7 +148,7 @@ public class HttpPidMinter implements Supplier<String> {
     **/
     protected String responseToPid( final String responseText ) throws IOException {
         LOGGER.debug("responseToPid({})", responseText);
-        if ( !isNullOrEmpty(regex) ) {
+        if ( !isBlank(regex) ) {
             return responseText.replaceFirst(regex,"");
         } else if ( xpath != null ) {
             try {

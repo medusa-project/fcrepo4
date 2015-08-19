@@ -19,8 +19,8 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.RdfLexicon.FEDORA_CONFIG_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONFIG_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -54,7 +54,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
-import com.google.common.base.Function;
 
 /**
  * <p>FedoraHtmlResponsesIT class.</p>
@@ -368,16 +367,9 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     }
 
-
+    @SuppressWarnings("unchecked")
     private static <T> List<T> castList(final List<?> l) {
-        return transform(l, new Function<Object, T>() {
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final Object input) {
-                return (T) input;
-            }
-        });
+        return transform(l, x -> (T) x);
     }
 
     private static class SuppressWarningIncorrectnessListener

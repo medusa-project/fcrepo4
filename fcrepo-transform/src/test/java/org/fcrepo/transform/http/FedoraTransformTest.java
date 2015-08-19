@@ -34,10 +34,10 @@ import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.transform.Transformation;
 import org.fcrepo.transform.TransformationFactory;
 import org.junit.Before;
@@ -90,6 +90,7 @@ public class FedoraTransformTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testEvaluateTransform() {
         final RdfStream stream = new RdfStream();
         when(mockResource.getTriples(any(IdentifierConverter.class), any(Class.class))).thenReturn(stream);

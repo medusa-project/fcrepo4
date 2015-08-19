@@ -24,7 +24,7 @@ import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
-import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -110,6 +110,10 @@ public abstract class AbstractResourceIT {
 
     protected static HttpGet getObjMethod(final String id) {
         return new HttpGet(serverAddress + id);
+    }
+
+    protected static HttpHead headObjMethod(final String id) {
+        return new HttpHead(serverAddress + id);
     }
 
     protected static HttpDelete deleteObjMethod(final String id) {

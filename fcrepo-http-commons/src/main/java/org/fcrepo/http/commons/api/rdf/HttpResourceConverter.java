@@ -18,15 +18,15 @@ package org.fcrepo.http.commons.api.rdf;
 import static com.google.common.collect.ImmutableList.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singleton;
-import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.apache.commons.lang.StringUtils.replaceOnce;
-import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
-import static org.fcrepo.kernel.FedoraJcrTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
-import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
-import static org.fcrepo.kernel.utils.NamespaceTools.validatePath;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.replaceOnce;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.utils.NamespaceTools.validatePath;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
@@ -47,15 +47,16 @@ import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.IdentifierConversionException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.exception.TombstoneException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.TombstoneImpl;
-import org.fcrepo.kernel.impl.identifiers.HashConverter;
-import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.api.exception.IdentifierConversionException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.TombstoneImpl;
+import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -218,6 +219,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             if (path.isEmpty()) {
                 return "/";
+            }
+
+            // Validate path
+            if (path.contains("//")) {
+                throw new InvalidResourceIdentifierException("Path contains empty element! " + path);
             }
             return path;
         }
@@ -403,6 +409,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
         if (context != null) {
+            @SuppressWarnings("unchecked")
             final List<Converter<String,String>> tchain =
                     getApplicationContext().getBean("translationChain", List.class);
             return tchain;

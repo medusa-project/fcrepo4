@@ -29,7 +29,7 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -38,11 +38,11 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -79,17 +79,17 @@ import javax.ws.rs.core.UriBuilderException;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -231,6 +231,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param checksum the checksum value
      * @param contentDisposition the content disposition value
      * @param ifMatch the if-match value
+     * @param link the link value
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
@@ -396,6 +397,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestContentType the request content type
      * @param slug the slug value
      * @param requestBodyStream the request body stream
+     * @param link the link value
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred

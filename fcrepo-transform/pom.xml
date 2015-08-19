@@ -3,11 +3,38 @@
   <parent>
     <artifactId>fcrepo</artifactId>
     <groupId>org.fcrepo</groupId>
-    <version>4.2.1-SNAPSHOT</version>
+    <version>4.3.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <properties>
     <ldpath.version>3.2.1</ldpath.version>
+    <osgi.import.packages>
+      org.fcrepo.kernel.api,
+      org.fcrepo.http.api,
+
+      javax.annotation,
+      javax.inject,
+      javax.jcr.*,
+      javax.ws.rs.*,
+
+      org.apache.commons.io,
+      org.apache.http,
+      org.apache.jena.riot,
+      org.apache.marmotta.ldpath.*,
+      org.jvnet.hk2.annotations,
+      org.modeshape.jcr.api,
+      org.springframework.stereotype,
+      org.springframework.context.*,
+
+      com.codahale.metrics.*,
+      com.google.common.*,
+      com.hp.hpl.jena.*,
+      
+      *
+    </osgi.import.packages>
+    <osgi.export.packages>
+      org.fcrepo.transform.*;version=${project.version}
+    </osgi.export.packages>
   </properties>
 
 
@@ -20,7 +47,7 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-api</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
@@ -79,6 +106,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
       <type>test-jar</type>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -172,19 +206,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>org.fcrepo.transform;version=${project.version}</Export-Package>
-            <Import-Package>
-              org.fcrepo.kernel.impl,
-              org.fcrepo.http.commons,
-              org.fcrepo.http.api
-            </Import-Package>
-            <Embed-Transitive>true</Embed-Transitive>
-          </instructions>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>

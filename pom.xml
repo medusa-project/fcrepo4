@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.2.1-SNAPSHOT</version>
+  <version>4.3.1-SNAPSHOT</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons 4</description>
   <organization>
@@ -27,13 +27,15 @@
     <!-- Dependency version properties -->
     <activemq.version>5.10.0</activemq.version>
     <commons-compress.version>1.9</commons-compress.version>
+    <commons-lang.version>3.3.2</commons-lang.version>
+    <jetty.version>9.3.1.v20150714</jetty.version>
     <enunciate.version>1.27</enunciate.version>
     <hk2.version>2.3.0</hk2.version>
     <htmlunit.version>2.15</htmlunit.version>
     <httpcomponents.version>4.3.2</httpcomponents.version>
     <httpclient.version>4.3.3</httpclient.version>
     <infinispan.version>6.0.2.Final</infinispan.version>
-    <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
+    <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     <jackson2.version>2.3.2</jackson2.version>
     <jaxb.version>2.2.7</jaxb.version>
     <jersey.version>2.13</jersey.version>
@@ -47,13 +49,18 @@
     <slf4j.version>1.7.7</slf4j.version>
     <spring.version>4.1.1.RELEASE</spring.version>
     <grizzly.version>2.3.16</grizzly.version>
-    <jena.version>2.12.1</jena.version>
+    <jena.version>2.13.0</jena.version>
     <jsonld.version>0.5.1</jsonld.version>
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <guava.version>18.0</guava.version>
+    <!-- OSGi -->
+    <osgi.import.packages />
+    <osgi.private.packages />
+    <osgi.export.packages />
     <!-- plugin versions -->
     <checkstyle.plugin.version>2.15</checkstyle.plugin.version>
+    <jacoco.plugin.version>0.7.5.201505241946</jacoco.plugin.version>
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
     <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
@@ -66,8 +73,8 @@
   <modules>
     <module>fcrepo-boms</module>
     <module>fcrepo-mint</module>
-    <module>fcrepo-kernel</module>
-    <module>fcrepo-kernel-impl</module>
+    <module>fcrepo-kernel-api</module>
+    <module>fcrepo-kernel-modeshape</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>
@@ -372,9 +379,9 @@
         <version>${sesame.version}</version>
       </dependency>
       <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>2.6</version>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${commons-lang.version}</version>
       </dependency>
       <dependency>
         <groupId>asm</groupId>
@@ -509,7 +516,7 @@
         <plugin>
           <groupId>com.github.github</groupId>
           <artifactId>site-maven-plugin</artifactId>
-          <version>0.11</version>
+          <version>0.12</version>
           <configuration>
             <message>Creating site for ${project.artifactId},
               ${project.version}</message>
@@ -539,6 +546,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${javadoc.plugin.version}</version>
+          <configuration>
+            <quiet>true</quiet>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>com.lazerycode.jmeter</groupId>
@@ -589,6 +599,15 @@
           <artifactId>maven-bundle-plugin</artifactId>
           <version>2.5.3</version>
           <extensions>true</extensions>
+          <configuration>
+            <instructions>
+              <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+              <Export-Package>${osgi.export.packages}</Export-Package>
+              <Import-Package>${osgi.import.packages}</Import-Package>
+              <Private-Package>${osgi.private.packages}</Private-Package>
+              <Embed-Transitive>true</Embed-Transitive>
+            </instructions>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -725,7 +744,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.18.1</version>
           <configuration>
-            <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
+            <argLine>-Xms512m -Xmx1024m</argLine>
           </configuration>
         </plugin>
         <plugin>
@@ -833,14 +852,14 @@
           </configuration>
         </plugin>
         <plugin>
-          <groupId>org.mortbay.jetty</groupId>
+          <groupId>org.eclipse.jetty</groupId>
           <artifactId>jetty-maven-plugin</artifactId>
-          <version>8.1.16.v20140903</version>
+          <version>${jetty.version}</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.7.2.201409121644</version>
+          <version>${jacoco.plugin.version}</version>
           <executions>
             <execution>
               <id>default-prepare-agent</id>
@@ -863,6 +882,9 @@
                 <destFile>${sonar.jacoco.itReportPath}</destFile>
                 <propertyName>jacoco.agent.it.arg</propertyName>
                 <append>true</append>
+                <excludes>
+                  <exclude>**/*SACParserCSS3TokenManager*</exclude>
+                </excludes>
               </configuration>
             </execution>
             <execution>
@@ -963,7 +985,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>-XX:MaxPermSize=128m ${jacoco.agent.it.arg}</argLine>
+          <argLine>${jacoco.agent.it.arg}</argLine>
         </configuration>
         <executions>
           <execution>
@@ -1007,6 +1029,21 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>verify-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
   <reporting>
@@ -1057,7 +1094,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.7.2.201409121644</version>
+        <version>${jacoco.plugin.version}</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -1183,7 +1220,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>${javadoc.plugin.version}</version>
             <executions>
               <execution>
                 <id>attach-javadocs</id>

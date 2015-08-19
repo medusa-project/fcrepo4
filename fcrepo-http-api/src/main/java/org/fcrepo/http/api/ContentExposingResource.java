@@ -16,13 +16,11 @@
 package org.fcrepo.http.api;
 
 
-import static com.google.common.base.Predicates.alwaysTrue;
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.ok;
@@ -30,17 +28,18 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.kernel.FedoraJcrTypes.LDP_BASIC_CONTAINER;
-import static org.fcrepo.kernel.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
+import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +47,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
@@ -65,50 +65,48 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import org.apache.jena.atlas.RuntimeIOException;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.ManagedRdf;
-import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.HashRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.RootRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
-import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.models.NonRdfSource;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.modeshape.services.TransactionServiceImpl;
 
 import org.apache.jena.riot.Lang;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -116,6 +114,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
  * content.
  *
  * @author Mike Durbin
+ * @author ajs6f
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
@@ -139,6 +138,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final long MAX_BUFFER_SIZE = 10240000;
 
+    private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
+            isManagedNamespace.test(t.getObject().getNameSpace());
+
     protected abstract String externalPath();
 
     protected Response getContent(final String rangeValue,
@@ -158,14 +160,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 final Model inputModel = createDefaultModel()
                         .read(content,  (resource()).toString(), format);
 
-                rdfStream.concat(Iterators.transform(inputModel.listStatements(),
-                        new Function<Statement, Triple>() {
-
-                            @Override
-                            public Triple apply(final Statement input) {
-                                return input.asTriple();
-                            }
-                        }));
+                rdfStream.concat(Iterators.transform(inputModel.listStatements(), Statement::asTriple));
             } else {
 
                 final MediaType mediaType = MediaType.valueOf(contentTypeString);
@@ -213,24 +208,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final Predicate<Triple> tripleFilter;
         if (ldpPreferences.prefersServerManaged()) {
-            tripleFilter = alwaysTrue();
+            tripleFilter = x -> true;
         } else {
-            tripleFilter = and(not(ManagedRdf.isManagedTriple), not(new Predicate<Triple>() {
-                @Override
-                public boolean apply(final Triple input) {
-                    return input.getPredicate().equals(RDF.type.asNode())
-                            && isManagedNamespace.apply(input.getObject().getNameSpace());
-                }
-            }));
+            tripleFilter = IS_MANAGED_TYPE.or(isManagedTriple).negate();
         }
 
         if (ldpPreferences.prefersServerManaged()) {
             rdfStream.concat(getTriples(LdpRdfContext.class));
         }
 
-        rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter));
+        rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter::test));
 
-        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));
+        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter::test));
 
         if (!returnPreference.getValue().equals("minimal")) {
 
@@ -258,15 +247,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 final FedoraResource described = ((NonRdfSourceDescription) resource()).getDescribedResource();
                 rdfStream.concat(filter(described.getTriples(translator(), ImmutableList.of(TypeRdfContext.class,
                         PropertiesRdfContext.class,
-                        ContentRdfContext.class)), tripleFilter));
+                        ContentRdfContext.class)), tripleFilter::test));
                 if (ldpPreferences.prefersServerManaged()) {
                     rdfStream.concat(getTriples(described,LdpRdfContext.class));
                 }
             }
 
             // Embed all hash and blank nodes
-            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));
-            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter));
+            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter::test));
+            rdfStream.concat(filter(getTriples(SkolemNodeRdfContext.class), tripleFilter::test));
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
@@ -278,17 +267,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                 final Iterator<FedoraResource> children = resource().getChildren();
 
-                rdfStream.concat(filter(concat(transform(children,
-                        new Function<FedoraResource, RdfStream>() {
-
-                            @Override
-                            public RdfStream apply(final FedoraResource child) {
-                                return child.getTriples(translator(), ImmutableList.of(
-                                        TypeRdfContext.class,
-                                        PropertiesRdfContext.class,
-                                        BlankNodeRdfContext.class));
-                            }
-                        })), tripleFilter));
+                rdfStream.concat(filter(concat(transform(children, child ->
+                child.getTriples(translator(),
+                        ImmutableList.of(
+                                TypeRdfContext.class, PropertiesRdfContext.class, SkolemNodeRdfContext.class)))),
+                        tripleFilter::test));
 
             }
         }
@@ -492,8 +475,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
+        final FedoraResource mutableResource = resource instanceof NonRdfSourceDescription
+                ? ((NonRdfSourceDescription) resource).getDescribedResource() : resource;
+        final EntityTag etag = new EntityTag(mutableResource.getEtagValue());
+        final Date date = mutableResource.getLastModifiedDate();
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
@@ -595,17 +580,31 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                              final RdfStream resourceTriples) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
-        final Model inputModel = createDefaultModel()
-                .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+        final Model inputModel = createDefaultModel();
+        try {
+            inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+
+        } catch (RuntimeIOException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                throw new MalformedRdfException(e.getCause());
+            }
+            throw new RepositoryRuntimeException(e);
+        }
 
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
-                                           final String requestBody,
-                                           final RdfStream resourceTriples)
-            throws MalformedRdfException, AccessDeniedException {
-        resource.updateProperties(translator(), requestBody, resourceTriples);
+            final String requestBody,
+            final RdfStream resourceTriples)
+                    throws MalformedRdfException, AccessDeniedException {
+        if (resource instanceof NonRdfSourceDescription) {
+            // update the described resource instead
+            ((NonRdfSourceDescription) resource).getDescribedResource()
+                    .updateProperties(translator(), requestBody, resourceTriples);
+        } else {
+            resource.updateProperties(translator(), requestBody, resourceTriples);
+        }
     }
 
     /**
