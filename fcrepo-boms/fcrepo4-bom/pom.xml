@@ -2,7 +2,7 @@
   <parent>
     <artifactId>fcrepo</artifactId>
     <groupId>org.fcrepo</groupId>
-    <version>4.3.1-SNAPSHOT</version>
+    <version>4.4.1-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -27,11 +27,6 @@
       <dependency>
         <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-auth-roles-common</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-build-tools</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -84,11 +79,6 @@
       <dependency>
         <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-serialization</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-transform</artifactId>
         <version>${project.version}</version>
       </dependency>
 

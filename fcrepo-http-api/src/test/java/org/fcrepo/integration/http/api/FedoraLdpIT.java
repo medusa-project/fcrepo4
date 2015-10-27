@@ -91,6 +91,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.text.ParseException;
@@ -386,13 +387,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
         try (final CloseableHttpResponse response = execute(getDSDescMethod(id, "x"));
-                final CloseableGraphStore graphStore = getGraphStore(response)) {
-            final String dsSubject = serverAddress + id + "/x";
-            final Node fedoraNonRdfSourceDescription = createURI(REPOSITORY_NAMESPACE + "NonRdfSourceDescription");
-            assertTrue("Description should be a fedora:NonRdfSourceDescription", graphStore.contains(ANY,
-                    createURI(dsSubject + "/" + FCR_METADATA), rdfType, fedoraNonRdfSourceDescription));
-            assertTrue("Binary should be a ldp:NonRDFSource", graphStore.contains(ANY,
-                    createURI(dsSubject), rdfType, NON_RDF_SOURCE.asNode()));
+                final CloseableGraphStore graph = getGraphStore(response)) {
+            final Node correctDSSubject = createURI(serverAddress + id + "/x");
+            assertTrue("Binary should be a ldp:NonRDFSource", graph.contains(ANY,
+                    correctDSSubject, rdfType, NON_RDF_SOURCE.asNode()));
+            // every triple in the response should have a subject of the actual resource described
+            logger.info("Found graph:\n{}", graph);
+            graph.find().forEachRemaining(quad -> {
+                assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
+            });
         }
     }
 
@@ -516,7 +519,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchBinaryNameAndType() throws Exception {
+    public void testPatchBinaryNameAndType() throws IOException {
         final String pid = getRandomUniqueId();
 
         createDatastream(pid, "x", "some content");
@@ -524,23 +527,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + pid + "/x/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
         patch.addHeader("Content-Type", "application/sparql-update");
-        final BasicHttpEntity e = new BasicHttpEntity();
-        final String sparql = "INSERT DATA { <" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/plain\""
-                                       + " . <" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }";
-        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
-        patch.setEntity(e);
-        final HttpResponse response = client.execute(patch);
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+        patch.setEntity(new StringEntity("DELETE { " +
+                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } " +
+                "WHERE {" +
+                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } ; " +
+                "INSERT {" +
+                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
+                "<" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }" +
+                "WHERE {}"));
 
-        final GraphStore graphStore = getGraphStore(new HttpGet(location));
-        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
-                HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
-        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
-                HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
-        assertFalse("Should not contain old mime type property",
-                graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
-                createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
+        try (final CloseableHttpResponse response = client.execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+                final Node subject = createURI(serverAddress + pid + "/x");
+                assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/awesome")));
+                assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
+                assertFalse("Should not contain old mime type property", graphStore.contains(ANY,
+                        subject, createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
+            }
+        }
+
+        // Ensure binary can be downloaded (test against regression of: https://jira.duraspace.org/browse/FCREPO-1720)
+        assertEquals(OK.getStatusCode(), getStatus(getDSMethod(pid, "x")));
     }
 
     @Test
@@ -1100,9 +1108,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
-        final String pid2 = uuid + "/child";
+        final String pid2 = uuid + "/child1";
+        final String pid3 = uuid + "/child2";
         createObjectAndClose(pid1);
         createObjectAndClose(pid2);
+        createObjectAndClose(pid3);
 
         final String memberRelation = "http://pcdm.org/models#hasMember";
 
@@ -1116,13 +1126,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createContainer.setEntity(new StringEntity(membersRDF));
         assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
 
-        // create a proxy in the indirect container
-        final HttpPost createProxy = new HttpPost(serverAddress + pid1 + "/members");
-        createProxy.addHeader("Content-Type", "text/turtle");
-        final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + pid2 + ">;"
-            + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + pid1 + "> .";
-        createProxy.setEntity(new StringEntity(proxyRDF));
-        assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
+        // create proxies for the children in the indirect container
+        createProxy(pid1, pid2);
+        createProxy(pid1, pid3);
 
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
@@ -1132,6 +1138,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
                     createURI(serverAddress + pid2)));
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid3)));
         }
 
         // retrieve the members container and verify the LDP triples exist
@@ -1170,7 +1180,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
                     createURI(serverAddress + pid2)));
+
+            assertFalse("Should not contain inbound references to the other child", memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid3)));
         }
+    }
+    private void createProxy(final String parent, final String child) throws Exception {
+        final HttpPost createProxy = new HttpPost(serverAddress + parent + "/members");
+        createProxy.addHeader("Content-Type", "text/turtle");
+        final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + child + ">;"
+            + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + parent + "> .";
+        createProxy.setEntity(new StringEntity(proxyRDF));
+        assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
     }
 
     @Test
@@ -1285,7 +1308,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRoundTripReplaceGraphForDatastream() throws IOException {
+    public void testRoundTripReplaceGraphForDatastreamDescription() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id + "/ds1";
         createDatastream(id, "ds1", "some-content");
@@ -1294,14 +1317,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.addHeader("Accept", "text/turtle");
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
-            model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
+            final String graph = EntityUtils.toString(getResponse.getEntity());
+            logger.trace("Got serialized object graph for testRoundTripReplaceGraphForDatastream():\n {}", graph);
+            try (final StringReader r = new StringReader(graph)) {
+                model.read(r, subjectURI, "TURTLE");
+            }
         }
-
         final HttpPut replaceMethod = new HttpPut(subjectURI + "/" + FCR_METADATA);
         try (final StringWriter w = new StringWriter()) {
             model.write(w, "N-TRIPLE");
-            replaceMethod.setEntity(new ByteArrayEntity(w.toString().getBytes()));
-            logger.trace("Retrieved object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
+            replaceMethod.setEntity(new StringEntity(w.toString()));
+            logger.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
         }
         replaceMethod.addHeader("Content-Type", "application/n-triples");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
@@ -1909,12 +1935,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
     public void testPutEmptyBody() throws IOException {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader("Content-Type", "application/ld+json");
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Should be a client error", BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutOgg() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", "OggS");
+    }
+
+    @Test
+    public void testPutReferenceRoot() throws Exception {
+        final HttpPut httpPut = putObjMethod(getRandomUniqueId());
+        httpPut.addHeader("Content-Type", "text/turtle");
+        httpPut.setEntity(new StringEntity("@prefix acl: <http://www.w3.org/ns/auth/acl#> . " +
+                "<> a acl:Authorization ; " +
+                "acl:agent \"smith123\" ; " +
+                "acl:mode acl:Read ;" +
+                "acl:accessTo <" + serverAddress + "> ."));
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
     }
 

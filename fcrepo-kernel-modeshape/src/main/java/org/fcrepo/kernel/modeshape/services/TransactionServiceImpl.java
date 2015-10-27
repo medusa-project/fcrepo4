@@ -53,7 +53,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TransactionServiceImpl extends AbstractService implements TransactionService {
 
-    private static final Logger LOGGER = getLogger(TransactionService.class);
+    private static final Logger LOGGER = getLogger(TransactionServiceImpl.class);
 
     /**
      * A key for looking up the transaction id in a session key-value pair
@@ -100,7 +100,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
                         try {
                             tx.rollback();
                         } catch (final RepositoryRuntimeException e) {
-                            LOGGER.error("Got exception rolling back expired transaction {}: {}", tx, e);
+                            LOGGER.error("Got exception rolling back expired transaction {}: {}", tx, e.getMessage());
                         }
                         transactions.remove(key);
                     });
@@ -171,7 +171,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             }
             return session.getNamespaceURI(FCREPO4_TX_ID);
         } catch (final RepositoryException e) {
-            LOGGER.trace("Unable to retrieve current transaction ID from session", e);
+            LOGGER.trace("Unable to retrieve current transaction ID from session: {}", e.getMessage());
             return null;
         }
     }

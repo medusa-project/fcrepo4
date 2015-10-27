@@ -15,15 +15,15 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
+
+import java.security.Principal;
 
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.security.Principal;
 
 /**
  * The security context for Fedora servlet users. These users are not
@@ -112,7 +112,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
         if (this.loggedIn && this.userPrincipal != null) {
             return this.userPrincipal;
         }
-        return EVERYONE;
+        return fad.getEveryonePrincipal();
     }
 
     /**
@@ -144,9 +144,18 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return actions.length == 1 && "read".equals(actions[0]);
         }
 
+        // Trim jcr:content from paths, if necessary
+        final Path path;
+        if (null != absPath.getLastSegment() && absPath.getLastSegment().getString().equals(JCR_CONTENT)) {
+            path = absPath.subpath(0, absPath.size() - 1);
+            LOGGER.debug("..new path to be verified: {}", path);
+        } else {
+            path = absPath;
+        }
+
         // delegate
         if (fad != null) {
-            return fad.hasPermission(context.getSession(), absPath, actions);
+            return fad.hasPermission(context.getSession(), path, actions);
         }
         return false;
     }
